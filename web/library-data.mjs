@@ -1,26 +1,27 @@
+import {tr} from './i18n.mjs';
 import {searchHistory} from './search-history.mjs';
 import {parseBilibiliId} from './bilibili-id.mjs';
 import {CACHE_BUDGETS,cacheTime} from './cache-policy.mjs';
 import {soundSettings,SOUND_DEFAULTS} from './audio-settings.mjs';
 import {libraryPreferences,playlistDetails} from './library-catalog.mjs';
 export const LIMITS = Object.freeze({ tracks: 10_000, playlists: 200, audio: 512 * 1024 * 1024, artwork: 20 * 1024 * 1024, lyrics: 200_000 });
-export const DEFAULTS = Object.freeze({ recognitionMode:'auto',audioEffects:SOUND_DEFAULTS,autoCache:false,cacheLimitMb:1024,cacheKeepFavorites:true,recordListening:true, theme: 'system', autoOpen: true, reduceMotion: false, volume: 80, sort: 'recent', currentId: '', position: 0, queue: [], queueIndex:-1,queueLocked:false,shuffle:false,repeat: 'OFF', searchPreference: 'qq', biliQuality:80, liveQuality:80, danmakuEnabled:false, danmakuSize:22, danmakuAlpha:.85, danmakuArea:.5, danmakuSpeed:1, danmakuDensity:16, danmakuFps:30, danmakuBlocked:'' });
+export const DEFAULTS = Object.freeze({ language:'en',recognitionMode:'auto',audioEffects:SOUND_DEFAULTS,autoCache:false,cacheLimitMb:1024,cacheKeepFavorites:true,recordListening:true, theme: 'system', autoOpen: true, reduceMotion: false, volume: 80, sort: 'recent', currentId: '', position: 0, queue: [], queueIndex:-1,queueLocked:false,shuffle:false,repeat: 'OFF', searchPreference: 'qq', biliQuality:80, liveQuality:80, danmakuEnabled:false, danmakuSize:22, danmakuAlpha:.85, danmakuArea:.5, danmakuSpeed:1, danmakuDensity:16, danmakuFps:30, danmakuBlocked:'' });
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
 export function validId(value) { return typeof value === 'string' && /^[A-Za-z0-9_-]{1,200}$/.test(value); }
 function field(value, limit, fallback = '') {
   if (value == null) return fallback;
-  if (typeof value !== 'string' || value.length > limit) throw new Error('Backup text exceeds supported limits');
+  if (typeof value !== 'string' || value.length > limit) throw new Error(tr("Backup text exceeds supported limits"));
   return value;
 }
 export function normalizeTrack(value) {
-  if (!object(value) || !validId(value.id)) throw new Error('Invalid track identifier in backup');
+  if (!object(value) || !validId(value.id)) throw new Error(tr("Invalid track identifier in backup"));
   const source = ['qq','bili','netease'].includes(value.source) ? value.source : 'local';
   const cached = source === 'local' || value.cached === true;
-  if (!Number.isSafeInteger(value.size) || value.size < (cached ? 1 : 0) || value.size > LIMITS.audio || (!cached && value.size !== 0)) throw new Error('Invalid audio file size in backup');
+  if (!Number.isSafeInteger(value.size) || value.size < (cached ? 1 : 0) || value.size > LIMITS.audio || (!cached && value.size !== 0)) throw new Error(tr("Invalid audio file size in backup"));
   const remoteId = source === 'local' ? '' : field(value.remoteId, 40);
-  if (source !== 'local' && (value.id !== `${source}-${remoteId}` || !(source==='bili'?parseBilibiliId(remoteId):/^[A-Za-z0-9]{1,40}$/.test(remoteId)))) throw new Error('Invalid online track identifier');
+  if (source !== 'local' && (value.id !== `${source}-${remoteId}` || !(source==='bili'?parseBilibiliId(remoteId):/^[A-Za-z0-9]{1,40}$/.test(remoteId)))) throw new Error(tr("Invalid online track identifier"));
   return {
-    id: value.id, title: field(value.title, 2000, 'Untitled track') || 'Untitled track', artist: field(value.artist, 2000, 'Local music') || 'Local music',
+    id: value.id, title: field(value.title, 2000, tr("Untitled track")) || tr("Untitled track"), artist: field(value.artist, 2000, tr("Local music")) || tr("Local music"),
     album: field(value.album, 2000), albumArtist: field(value.albumArtist, 2000), filename: field(value.filename, 2000),
     relativePath: field(value.relativePath, 4000),
     type: field(value.type, 120), size: value.size, favorite: value.favorite === true, lyrics: field(value.lyrics, LIMITS.lyrics),
@@ -39,13 +40,13 @@ export function normalizeTrack(value) {
   };
 }
 export function normalizePlaylists(values, trackIds) {
-  if (!Array.isArray(values) || values.length > LIMITS.playlists) throw new Error('Invalid playlist count in backup');
+  if (!Array.isArray(values) || values.length > LIMITS.playlists) throw new Error(tr("Invalid playlist count in backup"));
   const ids = new Set();
   return values.map(value => {
-    if (!object(value) || !validId(value.id) || ids.has(value.id)) throw new Error('Duplicate or invalid playlist identifier in backup');
+    if (!object(value) || !validId(value.id) || ids.has(value.id)) throw new Error(tr("Duplicate or invalid playlist identifier in backup"));
     ids.add(value.id);
     const name = field(value.name, 80).trim();
-    if (!name || !Array.isArray(value.trackIds) || value.trackIds.length > LIMITS.tracks || new Set(value.trackIds).size !== value.trackIds.length || value.trackIds.some(id => !trackIds.has(id))) throw new Error('Playlist contains duplicate or missing tracks');
+    if (!name || !Array.isArray(value.trackIds) || value.trackIds.length > LIMITS.tracks || new Set(value.trackIds).size !== value.trackIds.length || value.trackIds.some(id => !trackIds.has(id))) throw new Error(tr("Playlist contains duplicate or missing tracks"));
     const details=playlistDetails(value);
     if(details.background==='song' && !value.trackIds.includes(details.backgroundTrackId)){details.background='none';details.backgroundTrackId='';}
     return { id: value.id, name, trackIds: value.trackIds.slice(), createdAt: Number.isSafeInteger(value.createdAt) && value.createdAt >= 0 ? value.createdAt : 0,...details };
@@ -64,6 +65,7 @@ export function normalizePreferences(value, trackIds) {
   return {
     audioEffects:soundSettings(input.audioEffects),
     recognitionMode:['auto','offline','online'].includes(input.recognitionMode)?input.recognitionMode:'auto',
+    language: input.language==='zh-CN'?'zh-CN':'en',
     theme: ['system', 'light', 'dark'].includes(input.theme) ? input.theme : DEFAULTS.theme,
     autoOpen: typeof input.autoOpen === 'boolean' ? input.autoOpen : DEFAULTS.autoOpen,
     recordListening:input.recordListening!==false,

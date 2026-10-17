@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Feed imagery has its own resolution budget; music thumbnails remain small. */
 export const PICTURE_SIZES=[384,768,1280];
 export function pictureRequest(key){
@@ -5,7 +6,7 @@ export function pictureRequest(key){
   return match?{id:match[1],size:Number(match[2])}:null;
 }
 export async function resizeContentPicture(file,limit){
-  if(!PICTURE_SIZES.includes(limit) || !file.type.startsWith('image/') || file.size>8*1048576)throw new Error('Unsupported image format or size');
+  if(!PICTURE_SIZES.includes(limit) || !file.type.startsWith('image/') || file.size>8*1048576)throw new Error(tr("Unsupported image format or size"));
   const bitmap=await createImageBitmap(file);
   try {
     // The feed tiles are square. Crop before reducing so portrait images do not

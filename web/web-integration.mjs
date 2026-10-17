@@ -1,3 +1,4 @@
+import {tr,translate,currentLanguage} from './i18n.mjs';
 /** Installation is suggested in-app; browser permission prompts require an explicit click. */
 export class WebIntegration {
   constructor({host=globalThis,changed=()=>{},storage,now=Date.now}={}) {
@@ -20,15 +21,15 @@ export class WebIntegration {
     finally{this.busy=false;this.changed();}
   }
   async notifications(){
-    const N=this.host.Notification;if(!N)throw new Error('System notifications are unavailable in this browser');
-    if(N.permission==='denied')throw new Error('Notifications are blocked. Allow them in site permissions');
+    const N=this.host.Notification;if(!N)throw new Error(tr("System notifications are unavailable in this browser"));
+    if(N.permission==='denied')throw new Error(tr("Notifications are blocked. Allow them in site permissions"));
     const permission=N.permission==='granted'?'granted':await N.requestPermission();
     this.write('tinglan-notifications',permission==='granted'?'on':'off');this.changed();return permission;
   }
   disableNotifications(){this.write('tinglan-notifications','off');this.changed();}
 }
 
-export async function showDownloadNotification(registration,{title,success=true},enabled){
+export async function showDownloadNotification(registration,{title,success=true,language=currentLanguage()},enabled){
   if(!enabled || globalThis.Notification?.permission!=='granted' || !registration?.showNotification)return false;
-  await registration.showNotification(success?'Music cached':'Music caching incomplete',{body:String(title).slice(0,120),icon:'./icon-192.png',badge:'./icon-192.png',tag:'tinglan-download',silent:true,data:{route:'#cache'},actions:[{action:'open-cache',title:'View downloads'}]});return true;
+  await registration.showNotification(success?translate(language,"Music cached"):translate(language,"Music caching incomplete"),{body:String(title).slice(0,120),icon:'./icon-192.png',badge:'./icon-192.png',tag:'tinglan-download',silent:true,data:{route:'#cache'},actions:[{action:'open-cache',title:translate(language,"View downloads")}]});return true;
 }

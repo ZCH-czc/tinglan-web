@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import { VideoCapabilities } from './video-source.mjs';
 export const VIDEO_RATES=Object.freeze([.5,.75,1,1.25,1.5,2]);
 
@@ -12,11 +13,11 @@ export class VideoPlayback {
     this.video.addEventListener('waiting',()=>{if(this.isCurrent())this.patch({status:'buffering'});});
     this.video.addEventListener('playing',()=>{if(this.isCurrent())this.patch({status:'playing'});});
     audio.addEventListener('ratechange',()=>this.patch({rate:audio.playbackRate}));
-    this.video.addEventListener('error',()=>this.recover('Video decoder or source unavailable'));
+    this.video.addEventListener('error',()=>this.recover(tr("Video decoder or source unavailable")));
   }
   isCurrent(){return this.state.visible && this.state.status!=='closing' && !!this.active && (!this.video.currentSrc || this.video.currentSrc===this.active.href);}
   patch(value){if(value.status && value.status!==this.state.status)this.bufferingAt=value.status==='buffering'?this.now():null;this.state={...this.state,...value};this.changed(this.state);}
-  setRate(rate){if(!VIDEO_RATES.includes(rate))throw new Error('Choose a supported playback speed');this.audio.preservesPitch=true;this.audio.playbackRate=rate;this.patch({rate});this.sync();}
+  setRate(rate){if(!VIDEO_RATES.includes(rate))throw new Error(tr("Choose a supported playback speed"));this.audio.preservesPitch=true;this.audio.playbackRate=rate;this.patch({rate});this.sync();}
   async open(id,{quality=80,origin,reduced=false}={}) {
     const initialPosition=!this.id || this.id===id?this.audio.currentTime*1000:0;
     const revision=++this.revision;++this.mediaRevision;this.active=null;this.abort?.abort();this.abort=new AbortController();this.video.pause();this.video.removeAttribute('src');this.video.load();clearTimeout(this.timer);
@@ -26,10 +27,10 @@ export class VideoPlayback {
     try {
       const data=await this.sourceFor(id,quality,this.abort.signal);if(revision!==this.revision)return false;
       const candidates=await this.capabilities.rank(data.streams || [],quality,this.abort.signal);if(revision!==this.revision)return false;
-      if(!candidates.length)throw new Error('This browser does not support the available video codecs');this.candidates=candidates;
+      if(!candidates.length)throw new Error(tr("This browser does not support the available video codecs"));this.candidates=candidates;
       const qualities=[...new Map((data.streams || []).map(row=>[row.quality,{id:row.quality,label:row.label}])).values()].sort((a,b)=>b.id-a.id);
       this.patch({qualities});this.load(candidates[0]);return true;
-    }catch(error){if(revision!==this.revision || error.name==='AbortError')return false;this.patch({status:'error',error:error.message || 'Unable to load video. Return to audio to keep listening'});return false;}
+    }catch(error){if(revision!==this.revision || error.name==='AbortError')return false;this.patch({status:'error',error:error.message || tr("Unable to load video. Return to audio to keep listening")});return false;}
   }
   load(stream) {
     ++this.mediaRevision;this.video.pause();this.sample=null;this.bufferingAt=this.now();this.lastSeekAt=-Infinity;this.active={...stream,href:new URL(stream.url,globalThis.location?.href || 'http://localhost/').href};this.video.src=this.active.href;this.video.muted=true;this.video.load();
@@ -39,7 +40,7 @@ export class VideoPlayback {
     if(!this.isCurrent())return;
     this.failures.add(this.active.key);const next=this.candidates.find(row=>!this.failures.has(row.key));
     if(next && this.recoveries<3){++this.recoveries;this.load(next);return;}
-    this.video.pause();clearTimeout(this.timer);this.patch({status:'error',error:reason+'，Audio can continue playing'});
+    this.video.pause();clearTimeout(this.timer);this.patch({status:'error',error:reason+tr("，Audio can continue playing")});
   }
   sync(force=false) {
     clearTimeout(this.timer);this.timer=null;if(!this.state.visible || ['closing','error','loading'].includes(this.state.status))return;
@@ -49,7 +50,7 @@ export class VideoPlayback {
     if(this.audio.paused || this.audio.ended)this.bufferingAt=null;
     else if(this.state.status==='buffering'){
       this.bufferingAt ??= this.now();
-      if(this.now()-this.bufferingAt>20000){this.recover('Video buffering timed out');return;}
+      if(this.now()-this.bufferingAt>20000){this.recover(tr("Video buffering timed out"));return;}
     }
     if(this.video.readyState>=1){const delta=this.audio.currentTime-this.video.currentTime;
       const now=this.now(),drift=Math.abs(delta),seekNow=drift>.04 && (force || drift>.75 && now-this.lastSeekAt>1200);
@@ -58,11 +59,11 @@ export class VideoPlayback {
       const rate=Math.max(.25,Math.min(4,this.audio.playbackRate*(corrected?(delta>0?1.04:.96):1)));
       if(Math.abs(this.video.playbackRate-rate)>.002)this.video.playbackRate=rate;
       if(this.audio.paused || this.audio.ended){this.video.pause();return;}
-      if(this.video.paused && this.playingPromise?.mediaRevision!==this.mediaRevision){const operation={revision:this.revision,mediaRevision:this.mediaRevision};this.playingPromise=operation;Promise.resolve(this.video.play()).catch(error=>{if(operation.mediaRevision===this.mediaRevision && this.isCurrent() && error.name!=='AbortError')this.patch({status:'error',error:'Tap Play to start the video'});}).finally(()=>{if(this.playingPromise===operation)this.playingPromise=null;if(!this.state.visible || this.state.status==='closing' || this.hidden() || this.audio.paused)this.video.pause();});}
+      if(this.video.paused && this.playingPromise?.mediaRevision!==this.mediaRevision){const operation={revision:this.revision,mediaRevision:this.mediaRevision};this.playingPromise=operation;Promise.resolve(this.video.play()).catch(error=>{if(operation.mediaRevision===this.mediaRevision && this.isCurrent() && error.name!=='AbortError')this.patch({status:'error',error:tr("Tap Play to start the video")});}).finally(()=>{if(this.playingPromise===operation)this.playingPromise=null;if(!this.state.visible || this.state.status==='closing' || this.hidden() || this.audio.paused)this.video.pause();});}
     }
     if(this.audio.paused || this.audio.ended)return;
     const quality=this.video.readyState>=3 && !this.video.seeking?this.video.getVideoPlaybackQuality?.():null;const now=this.now();
-    if(quality){if(this.sample && now-this.sample.at>=5000){const total=quality.totalVideoFrames-this.sample.total,dropped=quality.droppedVideoFrames-this.sample.dropped;this.sample={at:now,total:quality.totalVideoFrames,dropped:quality.droppedVideoFrames};if(total>50 && dropped/total>.2)this.recover('Current quality is consistently dropping frames');}else this.sample ||= {at:now,total:quality.totalVideoFrames,dropped:quality.droppedVideoFrames};}
+    if(quality){if(this.sample && now-this.sample.at>=5000){const total=quality.totalVideoFrames-this.sample.total,dropped=quality.droppedVideoFrames-this.sample.dropped;this.sample={at:now,total:quality.totalVideoFrames,dropped:quality.droppedVideoFrames};if(total>50 && dropped/total>.2)this.recover(tr("Current quality is consistently dropping frames"));}else this.sample ||= {at:now,total:quality.totalVideoFrames,dropped:quality.droppedVideoFrames};}
     this.timer=setTimeout(()=>this.sync(),250);this.timer.unref?.();
   }
   close(origin=this.origin,reduced=this.reduced) {

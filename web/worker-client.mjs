@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Lazy workers: payloads stay as Blob references, and completed idle work releases its worker. */
 export class WorkerClient {
   constructor(url, { timeout = 0, idleMs = 0 } = {}) {
@@ -16,18 +17,18 @@ export class WorkerClient {
         if (event.data.error) task.reject(new Error(event.data.error)); else task.resolve(event.data.result);
         if (!this.pending.size && this.idleMs) this.idleTimer = setTimeout(() => this.close(), this.idleMs);
       });
-      this.worker.addEventListener('error', () => { if (this.worker === worker) this.close('Background task unavailable. Retry'); });
-      this.worker.addEventListener('messageerror', () => { if (this.worker === worker) this.close('Unable to read background task data'); });
+      this.worker.addEventListener('error', () => { if (this.worker === worker) this.close(tr("Background task unavailable. Retry")); });
+      this.worker.addEventListener('messageerror', () => { if (this.worker === worker) this.close(tr("Unable to read background task data")); });
     }
     const id = ++this.sequence;
     return new Promise((resolve, reject) => {
-      const timer = this.timeout ? setTimeout(() => this.close('File parsing timed out. Original audio is kept'), this.timeout) : undefined;
+      const timer = this.timeout ? setTimeout(() => this.close(tr("File parsing timed out. Original audio is kept")), this.timeout) : undefined;
       this.pending.set(id, { resolve, reject, timer, onProgress });
       try { this.worker.postMessage({ id, operation, input },transfer); }
-      catch { this.close('Unable to start background task'); }
+      catch { this.close(tr("Unable to start background task")); }
     });
   }
-  close(reason = 'Action cancelled') {
+  close(reason = tr("Action cancelled")) {
     clearTimeout(this.idleTimer); this.worker?.terminate(); this.worker = null;
     for (const task of this.pending.values()) { clearTimeout(task.timer); task.reject(new Error(reason)); }
     this.pending.clear();

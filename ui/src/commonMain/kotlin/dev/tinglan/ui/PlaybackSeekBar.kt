@@ -31,8 +31,8 @@ import moe.rukamori.archivetune.ui.component.PlayerSliderTrack
             },
             colors=colors,
             modifier=Modifier.fillMaxWidth().heightIn(min=48.dp).semantics {
-                contentDescription="Playback position"
-                stateDescription=if(total>0)"${timestamp(shown)} / ${timestamp(total)}"else "Reading duration"
+                contentDescription=tr("Playback position")
+                stateDescription=if(total>0)"${timestamp(shown)} / ${timestamp(total)}"else tr("Reading duration")
             },
             track={PlayerSliderTrack(it,colors=colors,trackHeight=4.dp)},
             thumb={Spacer(Modifier.size(width=4.dp,height=16.dp).background(if(total>0)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha=.25f),CircleShape))},

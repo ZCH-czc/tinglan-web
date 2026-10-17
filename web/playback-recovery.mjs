@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 export const PLAYBACK_LIMITS=Object.freeze({sourceMs:20000,bufferMs:30000,diagnosticMs:5000,backoffMs:750,refreshes:1,skips:3,stableMs:20000,networkResumes:1,cooldownMs:120000});
 
 export function retryAfterSeconds(value,now=Date.now()) {
@@ -12,20 +13,20 @@ export function playbackFailure(error={}, {mediaCode=0,offline=false,local=false
   const code=error.code || '',status=Number(error.status) || 0;
   const message=typeof error.message==='string'?error.message.slice(0,500):'';
   if(['verification','cooldown','busy','rate-limit'].includes(code) || status===429)
-    return {kind:'restricted',message:message || 'Platform requests temporarily limited. Retry later',retryAfter:retryAfterSeconds(error.retryAfter) || (code==='busy'?3:60)};
+    return {kind:'restricted',message:message || tr("Platform requests temporarily limited. Retry later"),retryAfter:retryAfterSeconds(error.retryAfter) || (code==='busy'?3:60)};
   if(['rights','sign-in','forbidden','session-changed'].includes(code) || [401,403,409].includes(status))
-    return {kind:'restricted',message:message || 'Connect an account with access to this track',retryAfter:0};
+    return {kind:'restricted',message:message || tr("Connect an account with access to this track"),retryAfter:0};
   if(code==='expired' || code==='source-expired' || status===410)
-    return {kind:'recoverable',message:'Playback URL expired. Restoring the previous position',retryAfter:0};
-  if(code==='missing-local')return {kind:'terminal',message:message || 'Audio file missing. Import it again',retryAfter:0};
-  if(error.name==='NotAllowedError')return {kind:'gesture',message:'Tap Play to allow the browser to start playback',retryAfter:0};
-  if(mediaCode===1)return {kind:'terminal',message:'Playback interrupted. Tap Play to continue',retryAfter:0};
-  if(local)return {kind:'terminal',message:mediaCode===3 || mediaCode===4 || error.name==='NotSupportedError'?'Unable to decode this local or cached audio. Check the file or download it again':'Unable to read local audio. Select the track again',retryAfter:0};
+    return {kind:'recoverable',message:tr("Playback URL expired. Restoring the previous position"),retryAfter:0};
+  if(code==='missing-local')return {kind:'terminal',message:message || tr("Audio file missing. Import it again"),retryAfter:0};
+  if(error.name==='NotAllowedError')return {kind:'gesture',message:tr("Tap Play to allow the browser to start playback"),retryAfter:0};
+  if(mediaCode===1)return {kind:'terminal',message:tr("Playback interrupted. Tap Play to continue"),retryAfter:0};
+  if(local)return {kind:'terminal',message:mediaCode===3 || mediaCode===4 || error.name==='NotSupportedError'?tr("Unable to decode this local or cached audio. Check the file or download it again"):tr("Unable to read local audio. Select the track again"),retryAfter:0};
   const network=['network','buffer-timeout','source-timeout'].includes(code) || error.name==='TypeError' || error.name==='TimeoutError' || mediaCode===2;
-  if(network && offline)return {kind:'offline',message:'Offline. Playback resumes when the connection returns, or tap Retry',retryAfter:0};
-  if(network || [502,503,504].includes(status))return {kind:'recoverable',message:message || 'Connection interrupted. Restoring playback',retryAfter:0};
-  if(mediaCode===3 || mediaCode===4 || error.name==='NotSupportedError')return {kind:'terminal',message:'The browser cannot decode this music. Try another format or source',retryAfter:0};
-  return {kind:'terminal',message:message || 'Unable to load music. Retry',retryAfter:0};
+  if(network && offline)return {kind:'offline',message:tr("Offline. Playback resumes when the connection returns, or tap Retry"),retryAfter:0};
+  if(network || [502,503,504].includes(status))return {kind:'recoverable',message:message || tr("Connection interrupted. Restoring playback"),retryAfter:0};
+  if(mediaCode===3 || mediaCode===4 || error.name==='NotSupportedError')return {kind:'terminal',message:tr("The browser cannot decode this music. Try another format or source"),retryAfter:0};
+  return {kind:'terminal',message:message || tr("Unable to load music. Retry"),retryAfter:0};
 }
 
 /** One address refresh per song and at most three forward queue steps in an unsuccessful chain.

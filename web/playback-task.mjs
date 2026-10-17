@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {hostSetTimeout,hostClearTimeout} from './host-api.mjs';
 
 /** A controller-owned deadline also settles adapters that ignore AbortSignal. Late values cannot
@@ -9,7 +10,7 @@ export function playbackTask(operation,{signal,timeoutMs,timers={setTimeout:host
     const finish=(callback,value)=>{if(settled)return;settled=true;if(timer!=null)timers.clearTimeout(timer);signal?.removeEventListener('abort',cancel);callback(value);};
     const cancel=()=>finish(reject,signal.reason || new DOMException('Cancelled','AbortError'));
     signal?.addEventListener('abort',cancel,{once:true});
-    if(timeoutMs>0){timer=timers.setTimeout(()=>finish(reject,Object.assign(new Error(code==='source-timeout'?'Music loading timed out. Check your connection':'Connection check timed out'),{code})),timeoutMs);timer?.unref?.();}
+    if(timeoutMs>0){timer=timers.setTimeout(()=>finish(reject,Object.assign(new Error(code==='source-timeout'?tr("Music loading timed out. Check your connection"):tr("Connection check timed out")),{code})),timeoutMs);timer?.unref?.();}
     try{Promise.resolve(operation()).then(value=>finish(resolve,value),error=>finish(reject,error));}catch(error){finish(reject,error);}
   });
 }

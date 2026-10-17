@@ -42,11 +42,11 @@ import androidx.compose.ui.unit.dp
                 Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     if(text!=null)Box(Modifier.weight(1f,fill=false)) {text()}
                     if(model.toast.isNotEmpty())Surface(shape=RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.primaryContainer) {
-                        Text(model.toast,modifier=Modifier.fillMaxWidth().padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},
+                        Text(trMessage(model.toast),modifier=Modifier.fillMaxWidth().padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},
                             color=MaterialTheme.colorScheme.onPrimaryContainer,style=MaterialTheme.typography.bodyMedium)
                     }
                     if(model.dialogError.isNotEmpty())Surface(shape=RoundedCornerShape(12.dp),color=MaterialTheme.colorScheme.errorContainer) {
-                        Text(model.dialogError,modifier=Modifier.fillMaxWidth().padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},
+                        Text(trMessage(model.dialogError),modifier=Modifier.fillMaxWidth().padding(12.dp).semantics {liveRegion=LiveRegionMode.Polite},
                             color=MaterialTheme.colorScheme.onErrorContainer,style=MaterialTheme.typography.bodyMedium)
                     }
                 }

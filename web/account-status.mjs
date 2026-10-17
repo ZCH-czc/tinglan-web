@@ -1,7 +1,8 @@
+import {tr} from './i18n.mjs';
 const sources=['qq','bili','netease'];
 const statuses=new Set(['disconnected','unverified','verified','expired','check-failed']);
 function publicAccounts(value) {
-  if(!Array.isArray(value?.accounts) || sources.some(source=>value.accounts.filter(row=>row?.source===source).length!==1))throw new Error('Incomplete account response. Update the Tinglan companion');
+  if(!Array.isArray(value?.accounts) || sources.some(source=>value.accounts.filter(row=>row?.source===source).length!==1))throw new Error(tr("Incomplete account response. Update the Tinglan companion"));
   return {accounts:sources.map(source=>{
     const row=value.accounts.find(row=>row.source===source);
     return {source,connected:row.connected===true,status:statuses.has(row.status)?row.status:'unverified',name:typeof row.name==='string'?row.name.slice(0,200):'',error:typeof row.error==='string'?row.error.slice(0,600):'',automaticRenewal:row.automaticRenewal===true,renewalStatus:['missing','healthy','checking','refreshed','rejected','unavailable','deferred'].includes(row.renewalStatus)?row.renewalStatus:'missing',renewalError:typeof row.renewalError==='string'?row.renewalError.slice(0,600):'',nextRenewalAt:Number.isSafeInteger(row.nextRenewalAt) && row.nextRenewalAt>0?row.nextRenewalAt:0};
@@ -31,7 +32,7 @@ export class AccountStatusReader {
         if(revision!==this.revision || abort.signal.aborted)return null;
         this.patch({loaded:true,value:publicAccounts(value),error:''});return value;
       }catch(error){
-        if(revision===this.revision && !abort.signal.aborted && error.name!=='AbortError')this.patch({error:(error.message || 'Account service unavailable. Check the local companion').slice(0,600)});
+        if(revision===this.revision && !abort.signal.aborted && error.name!=='AbortError')this.patch({error:(error.message || tr("Account service unavailable. Check the local companion")).slice(0,600)});
         return null;
       }finally {
         if(revision===this.revision){this.pending=null;this.patch({loading:false});}

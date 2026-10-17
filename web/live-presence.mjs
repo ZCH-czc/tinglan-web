@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {validRoom} from './live-room.mjs';
 
 const validAuthor=id=>typeof id==='string' && /^[1-9][0-9]{0,18}$/.test(id);
@@ -9,11 +10,11 @@ export function presenceRoute(route) {
   return null;
 }
 export function validatePresence(value,request) {
-  if(value?.scope!==request.scope || value.id!==request.id || typeof value.known!=='boolean' || typeof value.liveRoomId!=='string' || value.liveRoomId && !validRoom(value.liveRoomId) || !Number.isSafeInteger(value.fetchedAt) || value.fetchedAt<1 || !Array.isArray(value.items) || value.items.length>50)throw new Error('Live status does not match the current page');
-  if(request.scope==='author' && value.items.length || request.scope==='following' && value.liveRoomId || !value.known && value.liveRoomId)throw new Error('Invalid live status content');
+  if(value?.scope!==request.scope || value.id!==request.id || typeof value.known!=='boolean' || typeof value.liveRoomId!=='string' || value.liveRoomId && !validRoom(value.liveRoomId) || !Number.isSafeInteger(value.fetchedAt) || value.fetchedAt<1 || !Array.isArray(value.items) || value.items.length>50)throw new Error(tr("Live status does not match the current page"));
+  if(request.scope==='author' && value.items.length || request.scope==='following' && value.liveRoomId || !value.known && value.liveRoomId)throw new Error(tr("Invalid live status content"));
   const ids=new Set();
   for(const row of value.items) {
-    if(!validAuthor(row.id) || !validRoom(row.roomId) || typeof row.name!=='string' || !row.name.trim() || row.name.length>256 || typeof row.title!=='string' || row.title.length>512 || ids.has(row.id))throw new Error('The platform returned an invalid live list');
+    if(!validAuthor(row.id) || !validRoom(row.roomId) || typeof row.name!=='string' || !row.name.trim() || row.name.length>256 || typeof row.title!=='string' || row.title.length>512 || ids.has(row.id))throw new Error(tr("The platform returned an invalid live list"));
     ids.add(row.id);
   }
   return value;
@@ -33,7 +34,7 @@ export class LivePresencePages {
         const value=validatePresence(await this.load(owned,{force,signal}),owned);signal.throwIfAborted();if(revision!==this.revision)return;
         const result={...value,request:owned,loading:false,warning:''};this.cache.delete(id);this.cache.set(id,result);while(this.cache.size>this.limit)this.cache.delete(this.cache.keys().next().value);
         this.current=result;this.changed(this.current);
-      }catch(error){if(revision!==this.revision || signal.aborted || error.name==='AbortError')return;this.current={...this.current,loading:false,warning:error.message || 'Live status unavailable'};this.changed(this.current);}
+      }catch(error){if(revision!==this.revision || signal.aborted || error.name==='AbortError')return;this.current={...this.current,loading:false,warning:error.message || tr("Live status unavailable")};this.changed(this.current);}
       finally{if(revision===this.revision)this.work=null;}
     })();this.work=work;return work;
   }

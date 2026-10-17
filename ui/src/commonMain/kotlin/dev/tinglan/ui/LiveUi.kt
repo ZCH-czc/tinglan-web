@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
     val live=data.live
     val density=LocalDensity.current.density
     LazyColumn(state=retainedContentScroll(data.viewKey),modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(bottom=120.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
-        item {Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {Action("back","Leave live stream and return") {command("page-back")};Text("Bilibili Live",Modifier.weight(1f),style=MaterialTheme.typography.titleLarge);Action("refresh","Reload live stream") {command("live-retry")}}}
+        item {Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {Action("back",tr("Leave live stream and return")) {command("page-back")};Text(tr("Bilibili Live"),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge);Action("refresh",tr("Reload live stream")) {command("live-retry")}}}
         item {
             Box(Modifier.fillMaxWidth().padding(horizontal=16.dp).aspectRatio(16f/9f).clip(RoundedCornerShape(16.dp)).background(Color.Black).onGloballyPositioned {c->
                 val r=c.boundsInWindow();val p=c.positionInWindow();val size=c.size
@@ -34,11 +34,11 @@ import kotlinx.coroutines.delay
             },contentAlignment=Alignment.Center) {Glyph("bili",Modifier.size(36.dp),Color.White.copy(alpha=.6f))}
         }
         item {Column(Modifier.fillMaxWidth().padding(horizontal=24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
-            Text(live.title.ifBlank {"Loading live room…"},style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-            if(live.title.isNotEmpty())Text(if(live.live)"Live now · ${live.viewers} Popularity · ${live.area}" else "Offline",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
-            if(live.creatorId.isNotEmpty())TextButton(onClick={command("creator-direct",payload("id" to live.creatorId,"source" to "bili"))}) {Text("${live.creatorName} · View UP creator")}
+            Text(live.title.ifBlank {tr("Loading live room…")},style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+            if(live.title.isNotEmpty())Text(if(live.live)tr("Live now · {0} Popularity · {1}", live.viewers, live.area) else tr("Offline"),color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
+            if(live.creatorId.isNotEmpty())TextButton(onClick={command("creator-direct",payload("id" to live.creatorId,"source" to "bili"))}) {Text(tr("{0} · View UP creator", live.creatorName))}
             if(live.description.isNotBlank())RichContentText(live.description,emptyList())
-            if(live.background)Text("Page hidden. Stream downloading and decoding are paused",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            if(live.background)Text(tr("Page hidden. Stream downloading and decoding are paused"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }}
     }
 }
@@ -47,17 +47,17 @@ import kotlinx.coroutines.delay
     IconButton(onClick=onClick,modifier=Modifier.size(44.dp).semantics {contentDescription=label}) {if(loading)CircularProgressIndicator(Modifier.size(22.dp),color=Color.White,strokeWidth=2.dp)else Glyph(icon,color=Color.White)}
 }
 @Composable internal fun LiveQualityDialog(dismiss:()->Unit) {
-    TinglanAlertDialog(onDismissRequest=dismiss,bottomSheet=true,title={Text("Live quality")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        if(model.live.qualities.isEmpty())Text("No selectable quality available")
+    TinglanAlertDialog(onDismissRequest=dismiss,bottomSheet=true,title={Text(tr("Live quality"))},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+        if(model.live.qualities.isEmpty())Text(tr("No selectable quality available"))
         model.live.qualities.forEach {q->SelectionRow(q.label,q.id==model.live.quality){command("live-quality",q.id.toString());dismiss()}}
-    }},confirmButton={TextButton(onClick=dismiss) {Text("Close")}})
+    }},confirmButton={TextButton(onClick=dismiss) {Text(tr("Close"))}})
 }
 @Composable internal fun LiveLinkDialog() {
     var text by remember {mutableStateOf("")}
-    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text("Open live stream")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
-        Text("Enter Bilibili room ID or paste a live.bilibili.com live-stream URL.")
-        OutlinedTextField(text,{text=it.take(512)},label={Text("Room ID or URL")},singleLine=true,modifier=Modifier.fillMaxWidth())
-    }},confirmButton={TextButton(onClick={command("dialog-save",text)},enabled=text.isNotBlank()) {Text("Watch live")}},dismissButton={TextButton(onClick={command("dialog-close")}) {Text("Cancel")}})
+    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text(tr("Open live stream"))},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
+        Text(tr("Enter Bilibili room ID or paste a live.bilibili.com live-stream URL."))
+        OutlinedTextField(text,{text=it.take(512)},label={Text(tr("Room ID or URL"))},singleLine=true,modifier=Modifier.fillMaxWidth())
+    }},confirmButton={TextButton(onClick={command("dialog-save",text)},enabled=text.isNotBlank()) {Text(tr("Watch live"))}},dismissButton={TextButton(onClick={command("dialog-close")}) {Text(tr("Cancel"))}})
 }
 
 @Composable internal fun LiveControlsScene() {
@@ -79,23 +79,23 @@ import kotlinx.coroutines.delay
             AnimatedVisibility(visible,enter=fadeIn(tween(if(model.reduced)0 else 140)),exit=fadeOut(tween(if(model.reduced)0 else 120))) {
                 Box(Modifier.fillMaxSize()) {
                     Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=.6f),Color.Transparent))).padding(horizontal=8.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
-                        LiveAction("back",if(live.fullscreen)"Exit live fullscreen"else "Leave stream and restore music") {command(if(live.fullscreen)"live-fullscreen"else "page-back")}
+                        LiveAction("back",if(live.fullscreen)tr("Exit live fullscreen")else tr("Leave stream and restore music")) {command(if(live.fullscreen)"live-fullscreen"else "page-back")}
                         Text(live.title,Modifier.weight(1f),color=Color.White,maxLines=1,overflow=TextOverflow.Ellipsis,style=MaterialTheme.typography.labelLarge)
                     }
                     Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Black.copy(alpha=.65f)))).padding(horizontal=8.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
-                        LiveAction(if(live.desired)"pause" else "play","Play or pause stream",loading) {touch++;command("live-toggle")}
-                        Text(if(live.status=="reconnecting")"Reconnecting"else if(live.status=="playing")"Live"else "Live",Modifier.weight(1f),color=Color.White,style=MaterialTheme.typography.labelMedium)
-                        LiveAction(if(live.muted)"mute"else "volume",if(live.muted)"Unmute stream"else "Mute stream") {touch++;command("live-mute")}
-                        TextButton(onClick={touch++;if(live.fullscreen)menu=true else command("live-quality-menu")}) {Text(live.label.ifBlank {"Quality"},color=Color.White)}
-                        LiveAction(if(live.fullscreen)"fullscreen-exit"else "fullscreen",if(live.fullscreen)"Exit live fullscreen"else "Enter live fullscreen") {touch++;command("live-fullscreen")}
+                        LiveAction(if(live.desired)"pause" else "play",tr("Play or pause stream"),loading) {touch++;command("live-toggle")}
+                        Text(if(live.status=="reconnecting")tr("Reconnecting")else if(live.status=="playing")tr("Live")else tr("Live"),Modifier.weight(1f),color=Color.White,style=MaterialTheme.typography.labelMedium)
+                        LiveAction(if(live.muted)"mute"else "volume",if(live.muted)tr("Unmute stream")else tr("Mute stream")) {touch++;command("live-mute")}
+                        TextButton(onClick={touch++;if(live.fullscreen)menu=true else command("live-quality-menu")}) {Text(live.label.ifBlank {tr("Quality")},color=Color.White)}
+                        LiveAction(if(live.fullscreen)"fullscreen-exit"else "fullscreen",if(live.fullscreen)tr("Exit live fullscreen")else tr("Enter live fullscreen")) {touch++;command("live-fullscreen")}
                     }
                 }
             }
             if(loading && live.error.isBlank())CircularProgressIndicator(Modifier.align(Alignment.Center).size(30.dp),color=Color.White,strokeWidth=2.dp)
-            if(live.notice.isNotBlank() && loading)Text(live.notice,Modifier.align(Alignment.Center).padding(top=70.dp),color=Color.White,style=MaterialTheme.typography.bodySmall)
+            if(live.notice.isNotBlank() && loading)Text(trMessage(live.notice),Modifier.align(Alignment.Center).padding(top=70.dp),color=Color.White,style=MaterialTheme.typography.bodySmall)
             if(live.error.isNotBlank())Column(Modifier.align(Alignment.Center).padding(horizontal=20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
-                Text(live.error,color=Color.White,style=MaterialTheme.typography.bodySmall,maxLines=3,overflow=TextOverflow.Ellipsis)
-                TextButton(onClick={command(if(live.status=="paused")"live-toggle" else "live-retry")}) {Text(if(live.status=="paused")"Play stream" else "Reload")}
+                Text(trMessage(live.error),color=Color.White,style=MaterialTheme.typography.bodySmall,maxLines=3,overflow=TextOverflow.Ellipsis)
+                TextButton(onClick={command(if(live.status=="paused")"live-toggle" else "live-retry")}) {Text(if(live.status=="paused")tr("Play stream") else tr("Reload"))}
             }
             if(menu)LiveQualityDialog {menu=false}
             if(live.fullscreen)UpdateToast(Modifier.align(Alignment.TopCenter).padding(top=48.dp))

@@ -24,19 +24,19 @@ import androidx.compose.ui.unit.*
         val index=if(group=="parts")songs.indexOfFirst {it.id==activePart?.song?.id} else songs.indexOfFirst {current==it.id || current.startsWith(it.id+"_cid_")}
         if(index>=0)listState.scrollToItem(index)
     }
-    TinglanAlertDialog(onDismissRequest={command("dialog-close")},shape=RoundedCornerShape(26.dp),title={Text(info?.title?.ifEmpty {"Episodes & collections"} ?: "Episodes & collections",maxLines=2,overflow=TextOverflow.Ellipsis)},text={
+    TinglanAlertDialog(onDismissRequest={command("dialog-close")},shape=RoundedCornerShape(26.dp),title={Text(info?.title?.ifEmpty {tr("Episodes & collections")} ?: tr("Episodes & collections"),maxLines=2,overflow=TextOverflow.Ellipsis)},text={
         Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
-                TextButton(onClick={group="parts"}) {Text("Part P · ${model.biliParts.size}",fontWeight=if(group=="parts")FontWeight.Bold else FontWeight.Normal)}
-                if(!info?.collectionId.isNullOrEmpty())TextButton(onClick={group="collection"}) {Text("Collection · ${info.collectionTotal}",fontWeight=if(group=="collection")FontWeight.Bold else FontWeight.Normal)}
+                TextButton(onClick={group="parts"}) {Text(tr("Part P · {0}", model.biliParts.size),fontWeight=if(group=="parts")FontWeight.Bold else FontWeight.Normal)}
+                if(!info?.collectionId.isNullOrEmpty())TextButton(onClick={group="collection"}) {Text(tr("Collection · {0}", info.collectionTotal),fontWeight=if(group=="collection")FontWeight.Bold else FontWeight.Normal)}
                 Spacer(Modifier.weight(1f))
-                IconButton(onClick={command("bili-context-refresh")},enabled=info?.loading!=true,modifier=Modifier.semantics {contentDescription="Refresh episodes"}) {Glyph("refresh")}
+                IconButton(onClick={command("bili-context-refresh")},enabled=info?.loading!=true,modifier=Modifier.semantics {contentDescription=tr("Refresh episodes")}) {Glyph("refresh")}
             }
-            if(info?.warning?.isNotEmpty()==true)Text(info.warning,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
+            if(info?.warning?.isNotEmpty()==true)Text(trMessage(info.warning),color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
             if(group=="collection") {
                 Text(info?.collectionTitle.orEmpty(),fontWeight=FontWeight.SemiBold)
-                if(info?.partial==true)Text("Only part of this collection is available here. Open the full collection for more.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick={command("bili-context-collection")}) {Text("Open full collection / Save to library")}
+                if(info?.partial==true)Text(tr("Only part of this collection is available here. Open the full collection for more."),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick={command("bili-context-collection")}) {Text(tr("Open full collection / Save to library"))}
             }
             if(info?.loading==true && songs.isEmpty())LinearProgressIndicator(Modifier.fillMaxWidth())
             LazyColumn(state=listState,modifier=Modifier.fillMaxWidth().heightIn(max=360.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.*
                         }
                     }
                 }
-                if(info?.loading!=true && songs.isEmpty())item {Text("No available content. Refresh to retry.",Modifier.padding(vertical=20.dp),color=MaterialTheme.colorScheme.onSurfaceVariant)}
+                if(info?.loading!=true && songs.isEmpty())item {Text(tr("No available content. Refresh to retry."),Modifier.padding(vertical=20.dp),color=MaterialTheme.colorScheme.onSurfaceVariant)}
             }
         }
-    },confirmButton={TextButton(onClick={command("dialog-close")}) {Text("Close")}})
+    },confirmButton={TextButton(onClick={command("dialog-close")}) {Text(tr("Close"))}})
 }

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Only decoded pixels use DOM. The entire visible live player, menus and buttons use transparent Skia. */
 import {focusSceneCanvas} from './modal-semantics.mjs';
 export function createLiveHost(mount,changed=()=>{}) {
@@ -21,6 +22,6 @@ export function createLiveHost(mount,changed=()=>{}) {
     bounds(value){if(!active)return;const r=Object.fromEntries(['x','y','width','height','clipTop','clipBottom'].map(k=>[k,Number(value?.[k]) || 0]));if(Object.values(r).some(n=>!Number.isFinite(n) || Math.abs(n)>100000))return;if(JSON.stringify(rect)!==JSON.stringify(r)){rect=r;schedule();}},
     overlay(value){overlay=value;schedule();},
     close(){active=false;frame.hidden=true;rect=null;canvasSize='';if(document.fullscreenElement===frame)document.exitFullscreen().catch(()=>{});focusSceneCanvas(document.getElementById('tinglan-root'));},
-    async fullscreen(){if(document.fullscreenElement===frame)await document.exitFullscreen();else {if(!frame.requestFullscreen)throw new Error('Fullscreen is unsupported in this browser');await frame.requestFullscreen();}},
+    async fullscreen(){if(document.fullscreenElement===frame)await document.exitFullscreen();else {if(!frame.requestFullscreen)throw new Error(tr("Fullscreen is unsupported in this browser"));await frame.requestFullscreen();}},
   };
 }

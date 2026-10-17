@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {cacheKind,cacheTime,cacheTotals,cachePatch,clearedCache,evictionPlan} from './cache-policy.mjs';
 import {mediaChanged} from './media-identity.mjs';
 
@@ -16,7 +17,7 @@ export class CacheStore {
   constructor(store){this.store=store;}
   async inspect(){
     let tracks=[],artworkBytes=0;
-    await new Promise((resolve,reject)=>{const tx=this.store.db.transaction(['tracks','artwork']),r=tx.objectStore('artwork').openCursor();scan(tx,rows=>{tracks=rows;});r.onsuccess=()=>{const c=r.result;if(c){artworkBytes+=c.value instanceof Blob?c.value.size:0;c.continue();}};tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error || new Error('Unable to read local storage usage'));});
+    await new Promise((resolve,reject)=>{const tx=this.store.db.transaction(['tracks','artwork']),r=tx.objectStore('artwork').openCursor();scan(tx,rows=>{tracks=rows;});r.onsuccess=()=>{const c=r.result;if(c){artworkBytes+=c.value instanceof Blob?c.value.size:0;c.continue();}};tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error || new Error(tr("Unable to read local storage usage")));});
     return {...cacheTotals(tracks),artworkBytes,cacheRecords:tracks};
   }
   async touch(id,at){await this.store.write(['tracks'],tx=>{const s=tx.objectStore('tracks'),r=s.get(id);r.onsuccess=()=>{if(cacheKind(r.result)==='automatic')s.put({...r.result,cacheTouchedAt:cacheTime(at)},id);};});}
@@ -29,19 +30,19 @@ export class CacheStore {
           if(--pending)return;
           try{
             signal?.throwIfAborted();const current=r.result;
-            if(!current || !['qq','bili','netease'].includes(current.source))throw new Error('Track removed. Cache task cancelled');
+            if(!current || !['qq','bili','netease'].includes(current.source))throw new Error(tr("Track removed. Cache task cancelled"));
             const existing=media.result instanceof Blob && media.result.size===current.size?cacheKind(current):'';
             if(existing && mode==='automatic'){saved=current;return;}
-            if(!existing && (!(audio instanceof Blob) || !audio.size))throw new Error('Downloaded audio is incomplete');
+            if(!existing && (!(audio instanceof Blob) || !audio.size))throw new Error(tr("Downloaded audio is incomplete"));
             const savedMode=mode==='download' || existing==='download'?'download':'automatic';
             const size=existing?current.size:audio.size;
             if(savedMode==='automatic'){
-              if(!Number.isFinite(limit) && limit!==Infinity || limit<=0 || size>limit)throw new Error('Track exceeds the automatic cache limit. Choose offline download');
+              if(!Number.isFinite(limit) && limit!==Infinity || limit<=0 || size>limit)throw new Error(tr("Track exceeds the automatic cache limit. Choose offline download"));
               const others=rows.filter(row=>row.id!==id),total=cacheTotals(others).automaticBytes;
               if(total+size>limit){
                 const plan=evictionPlan(others,{target:Math.max(0,limit*.85-size),protectedIds:protectedIds(),keepFavorites});
-                if(plan.remaining+size>limit)throw new Error('Automatic cache is full. Playing and retained tracks are protected');
-                for(const row of plan.remove)clearStored(tx,row,updates,{protectedIds,skipped:()=>{extraError=new Error('Queue changed. Automatic caching deferred');tx.abort();}});
+                if(plan.remaining+size>limit)throw new Error(tr("Automatic cache is full. Playing and retained tracks are protected"));
+                for(const row of plan.remove)clearStored(tx,row,updates,{protectedIds,skipped:()=>{extraError=new Error(tr("Queue changed. Automatic caching deferred"));tx.abort();}});
               }
             }
             saved={...current,cached:true,size,type:existing?current.type:audio.type,cacheMode:savedMode,cacheSavedAt:cacheTime(current.cacheSavedAt)||cacheTime(at),cacheTouchedAt:cacheTime(at)};

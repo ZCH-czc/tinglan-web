@@ -134,7 +134,7 @@ export function createGateway({ providers, fetcher=fetch, now=Date.now, loginPro
         const controller=new AbortController(),closed=()=>controller.abort();res.once('close',closed);
         try{const result=await recognition.match(session.id,await body(req,90000),controller.signal);controller.signal.throwIfAborted();if(result.song)remember([result.song]);await reply(res,200,result);}finally{res.removeListener('close',closed);}return true;
       }
-      if(url.pathname==='/api/health') {await reply(res,200,{ok:true,version:'0.31.1',sources});return true;}
+      if(url.pathname==='/api/health') {await reply(res,200,{ok:true,version:'0.31.2',sources});return true;}
       if(url.pathname==='/api/cache-revoke'){
         if(req.method!=='POST')throw new PlatformError('invalid-request','Invalid download request method',405);
         const input=await body(req),token=typeof input.path==='string' && /^\/api\/media\/[a-f0-9]{48}$/.test(input.path)?input.path.slice(11):'';

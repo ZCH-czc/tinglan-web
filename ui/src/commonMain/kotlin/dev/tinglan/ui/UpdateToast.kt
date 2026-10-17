@@ -18,13 +18,13 @@ import androidx.compose.ui.unit.dp
             Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                 Glyph("update",color=MaterialTheme.colorScheme.primary)
                 Column(Modifier.weight(1f)) {
-                    Text(if(model.updateApplying)"Applying update…" else "A new Tinglan version is ready",fontWeight=FontWeight.SemiBold)
-                    Text("Updating saves your position and reloads the page",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if(model.updateApplying)tr("Applying update…") else tr("A new Tinglan version is ready"),fontWeight=FontWeight.SemiBold)
+                    Text(tr("Updating saves your position and reloads the page"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End) {
-                TextButton(onClick={command("update-dismiss")},enabled=!model.updateApplying) {Text("Later")}
-                TextButton(onClick={command("apply-update")},enabled=!model.updateApplying) {Text("Update now")}
+                TextButton(onClick={command("update-dismiss")},enabled=!model.updateApplying) {Text(tr("Later"))}
+                TextButton(onClick={command("apply-update")},enabled=!model.updateApplying) {Text(tr("Update now"))}
             }
         }
     }

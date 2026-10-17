@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import { boundedOrigin } from './video-source.mjs';
 import {focusSceneCanvas} from './modal-semantics.mjs';
 
@@ -20,6 +21,6 @@ export function createVideoHost(mount,changed=()=>{}) {
       const end=reduced?null:transform(origin);frame.style.transition=reduced?'none':'clip-path 240ms cubic-bezier(.2,0,0,1),opacity 180ms ease';video.style.transition=frame.style.transition.replace('clip-path','transform');frame.style.clipPath=end?.clip || 'inset(0 round 0px)';video.style.transform=end?.pixels || 'none';frame.style.opacity='0';
       setTimeout(()=>{if(current!==revision)return;frame.hidden=true;frame.setAttribute('aria-hidden','true');done();focusSceneCanvas(document.getElementById('tinglan-root'));},reduced?0:240);
     },
-    async fullscreen(){if(document.fullscreenElement===frame)await document.exitFullscreen();else {if(!frame.requestFullscreen)throw new Error('Fullscreen is unsupported. Rotate your device to landscape');await frame.requestFullscreen();}},
+    async fullscreen(){if(document.fullscreenElement===frame)await document.exitFullscreen();else {if(!frame.requestFullscreen)throw new Error(tr("Fullscreen is unsupported. Rotate your device to landscape"));await frame.requestFullscreen();}},
   };
 }

@@ -1,20 +1,21 @@
+import {tr} from './i18n.mjs';
 /** Music identity only. Captured PCM, fingerprints and microphone identifiers are never persisted. */
 import {parseBilibiliId} from './bilibili-id.mjs';
 export const RECOGNITION_LIMITS=Object.freeze({seconds:6,sampleRate:8000,history:100,page:12,fileBytes:64*1024*1024,signatureBytes:65536});
 export function recognitionSong(value) {
   const source=value?.source || 'local',remoteId=typeof value?.remoteId==='string'?value.remoteId:'';
   const valid=source==='local'?typeof value?.id==='string' && /^[A-Za-z0-9_-]{1,200}$/.test(value.id) && !/^(qq|bili|netease)-/.test(value.id):['qq','bili','netease'].includes(source) && value?.id===`${source}-${remoteId}` && (source==='bili'?!!parseBilibiliId(remoteId):source==='netease'?/^[1-9]\d{0,18}$/.test(remoteId):/^[A-Za-z0-9]{1,40}$/.test(remoteId));
-  if(!valid)throw new Error('Invalid recognized track identifier');
+  if(!valid)throw new Error(tr("Invalid recognized track identifier"));
   const text=(key,limit)=>typeof value[key]==='string'?value[key].slice(0,limit):'';
-  const title=text('title',300).trim();if(!title)throw new Error('Recognition result is missing a track title');
+  const title=text('title',300).trim();if(!title)throw new Error(tr("Recognition result is missing a track title"));
   let artworkUrl='';try{const u=new URL(value.artworkUrl),hosts={qq:['y.gtimg.cn'],bili:['hdslb.com'],netease:['music.126.net']}[source] || [];if(u.protocol==='https:' && !u.username && !u.password && (!u.port || u.port==='443') && hosts.some(h=>u.hostname===h || u.hostname.endsWith('.'+h)))artworkUrl=u.href;}catch{}
-  return {id:value.id,remoteId,source,title,artist:text('artist',500) || 'Unknown artist',album:text('album',300),creatorId:/^[A-Za-z0-9_]{1,40}$/.test(value.creatorId)?value.creatorId:'',creatorName:text('creatorName',500),artworkUrl,hasArtwork:!!artworkUrl || source==='local' && value.hasArtwork===true,durationMs:Number.isFinite(value.durationMs)?Math.min(86400000,Math.max(0,Math.floor(value.durationMs))):0,favorite:false,cached:false,size:0,recognizedVia:value.recognizedVia==='local'?'local':'online'};
+  return {id:value.id,remoteId,source,title,artist:text('artist',500) || tr("Unknown artist"),album:text('album',300),creatorId:/^[A-Za-z0-9_]{1,40}$/.test(value.creatorId)?value.creatorId:'',creatorName:text('creatorName',500),artworkUrl,hasArtwork:!!artworkUrl || source==='local' && value.hasArtwork===true,durationMs:Number.isFinite(value.durationMs)?Math.min(86400000,Math.max(0,Math.floor(value.durationMs))):0,favorite:false,cached:false,size:0,recognizedVia:value.recognizedVia==='local'?'local':'online'};
 }
 export function recognitionHistory(values) {
   if(values===undefined)return [];
-  if(!Array.isArray(values) || values.length>RECOGNITION_LIMITS.history)throw new Error('Recognition history exceeds 100 entry limit');
+  if(!Array.isArray(values) || values.length>RECOGNITION_LIMITS.history)throw new Error(tr("Recognition history exceeds 100 entry limit"));
   const seen=new Set(),rows=[];
-  for(const value of values){const song=recognitionSong(value);if(!Number.isSafeInteger(value.recognizedAt) || value.recognizedAt<=0 || value.recognizedAt>8640000000000000)throw new Error('Invalid recognition history timestamp');if(seen.has(song.id))continue;seen.add(song.id);rows.push({...song,recognizedAt:value.recognizedAt});}
+  for(const value of values){const song=recognitionSong(value);if(!Number.isSafeInteger(value.recognizedAt) || value.recognizedAt<=0 || value.recognizedAt>8640000000000000)throw new Error(tr("Invalid recognition history timestamp"));if(seen.has(song.id))continue;seen.add(song.id);rows.push({...song,recognizedAt:value.recognizedAt});}
   return rows.sort((a,b)=>b.recognizedAt-a.recognizedAt);
 }
 export function recognitionPage(rows,query='',page=0) {

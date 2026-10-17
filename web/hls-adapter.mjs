@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import Hls from 'hls.js';
 
 const policy=()=>({default:{maxTimeToFirstByteMs:10000,maxLoadTimeMs:15000,timeoutRetry:null,errorRetry:null}});
@@ -12,7 +13,7 @@ export function supportsLiveStream(stream) {
 export function attachLiveHls(video,url,failed,signal,HlsClass=Hls) {
   if(signal?.aborted)throw new DOMException('Cancelled','AbortError');
   if(!HlsClass.isSupported()) {
-    if(!video.canPlayType('application/vnd.apple.mpegurl'))throw new Error('This browser does not support HLS Live');video.src=url;video.load();
+    if(!video.canPlayType('application/vnd.apple.mpegurl'))throw new Error(tr("This browser does not support HLS Live"));video.src=url;video.load();
     return {destroy(){video.pause();video.removeAttribute('src');video.load();},stop(){video.pause();video.removeAttribute('src');video.load();},start(){if(!video.getAttribute('src')){video.src=url;video.load();}}};
   }
   const hls=new HlsClass(LIVE_HLS_CONFIG);let recovery=0,destroyed=false,loading=false,manifestReady=false,badSamples=0,reportedDrop=false;
@@ -20,16 +21,16 @@ export function attachLiveHls(video,url,failed,signal,HlsClass=Hls) {
     if(destroyed || !loading || video.paused || video.seeking || video.readyState<3 || reportedDrop){badSamples=0;return;}
     badSamples=data.currentDecoded>50 && data.currentDropped/data.currentDecoded>.2?badSamples+1:0;
     // A master playlist can reduce its own level. Single-level rooms need a compatible source.
-    if(badSamples>=2 && !(hls.levels?.length>1)){reportedDrop=true;failed('Live playback is dropping frames. Try a lower quality',{recoverable:true,performance:true});}
+    if(badSamples>=2 && !(hls.levels?.length>1)){reportedDrop=true;failed(tr("Live playback is dropping frames. Try a lower quality"),{recoverable:true,performance:true});}
   });
   hls.on(HlsClass.Events.MANIFEST_PARSED,()=>{manifestReady=true;if(!loading)hls.stopLoad();});
   hls.on(HlsClass.Events.ERROR,(_,data)=>{
     if(destroyed)return;
     const status=Number(data.response?.code || data.networkDetails?.status);
-    if([401,403,412,429].includes(status)){hls.stopLoad();failed('Live access denied or verification required. Retry manually');return;}
+    if([401,403,412,429].includes(status)){hls.stopLoad();failed(tr("Live access denied or verification required. Retry manually"));return;}
     if(!data.fatal)return;
     if(data.type===HlsClass.ErrorTypes.MEDIA_ERROR && recovery++===0){hls.recoverMediaError();return;}
-    hls.stopLoad();failed(data.type===HlsClass.ErrorTypes.NETWORK_ERROR?'Live connection lost. Check your network':'Live decoding failed. Try another quality',{recoverable:data.type===HlsClass.ErrorTypes.MEDIA_ERROR,transient:data.type===HlsClass.ErrorTypes.NETWORK_ERROR && (!status || status===408 || status>=500 && status<=599)});
+    hls.stopLoad();failed(data.type===HlsClass.ErrorTypes.NETWORK_ERROR?tr("Live connection lost. Check your network"):tr("Live decoding failed. Try another quality"),{recoverable:data.type===HlsClass.ErrorTypes.MEDIA_ERROR,transient:data.type===HlsClass.ErrorTypes.NETWORK_ERROR && (!status || status===408 || status>=500 && status<=599)});
   });
   const destroy=()=>{if(destroyed)return;destroyed=true;signal?.removeEventListener('abort',destroy);hls.destroy();};
   signal?.addEventListener('abort',destroy,{once:true});hls.attachMedia(video);

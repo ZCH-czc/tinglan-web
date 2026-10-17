@@ -5,7 +5,7 @@ import kotlin.js.JsExport
 
 private var engine = MusicEngine()
 
-@JsExport fun engineVersion(): String = "0.31.1"
+@JsExport fun engineVersion(): String = "0.31.2"
 @JsExport fun localFingerprintExtract(pcm:String,offset:Int):String=LocalFingerprints.extract(pcm,offset)
 @JsExport fun localFingerprintScore(query:String,reference:String):String=LocalFingerprints.score(query,reference).let {"${it.votes},${it.matchedFrames},${it.distinctHashes}"}
 @JsExport fun localFingerprintAccepts(votes:Int,frames:Int,hashes:Int,runnerVotes:Int,runnerFrames:Int,runnerHashes:Int):Boolean=LocalFingerprints.accepts(votes,frames,hashes,runnerVotes,runnerFrames,runnerHashes)

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {requireCompanion, STATIC_HOSTING} from './deployment.mjs';
 import {searchTerm} from './search-history.mjs';
 import {hostFetch} from './host-api.mjs';
@@ -29,7 +30,7 @@ export class PlatformClient {
       if(generation!==this.generation)throw new DOMException('Account changed','AbortError');
       await this.store.cacheCatalog(cacheKey,data).catch(()=>{});
       controller.signal.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');return data;
-    } catch(error) {controller.signal.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,fromCache:true,warning:'Connection lost. Showing previous results'};throw error;}
+    } catch(error) {controller.signal.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,fromCache:true,warning:tr("Connection lost. Showing previous results")};throw error;}
     finally {if(this.controllers.get(key)===controller)this.controllers.delete(key);}
   }
   source(id,signal) {return this.request(`/api/stream?id=${encodeURIComponent(id)}`,{signal});}
@@ -47,7 +48,7 @@ export class PlatformClient {
     if(generation!==this.generation)throw new DOMException('Account changed','AbortError');
     if(cached && !force)return cached;
     try {const value=await this.request(`/api/creator?${new URLSearchParams({source,id,page,...(profileOnly?{mode:'profile'}:{})})}`,{signal});signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');await this.store.cacheCatalog(key,value).catch(()=>{});signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');return value;}
-    catch(error){signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,warning:'Connection lost. Showing previous results'};throw error;}
+    catch(error){signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,warning:tr("Connection lost. Showing previous results")};throw error;}
   }
   async content(name,params,{force=false,signal}={}) {
     const generation=this.generation,query=new URLSearchParams(params),key=`${name}|${this.accountRevision || generation}|${query}`;
@@ -59,7 +60,7 @@ export class PlatformClient {
       if(generation!==this.generation)throw new DOMException('Account changed','AbortError');
       await this.store.cacheCatalog(key,value).catch(()=>{});signal?.throwIfAborted();
       if(generation!==this.generation)throw new DOMException('Account changed','AbortError');return value;
-    }catch(error){signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,warning:'Connection lost. Showing previous results'};throw error;}
+    }catch(error){signal?.throwIfAborted();if(generation!==this.generation)throw new DOMException('Account changed','AbortError');if(error.name==='AbortError')throw error;if(cached)return {...cached,warning:tr("Connection lost. Showing previous results")};throw error;}
   }
   comments(request,options={}) {return this.content('comments',{id:request.id,order:request.order || 'hot',root:request.root || '',cursor:request.cursor || ''},options);}
   collection(request,options={}) {return this.content('collection',{source:request.source,id:request.id,page:request.page || 1},options);}
@@ -92,7 +93,7 @@ export class PlatformClient {
     const revision=++this.accountRead,generation=this.generation;
     const value=await this.request('/api/accounts',{signal});
     signal?.throwIfAborted();if(revision!==this.accountRead || generation!==this.generation)throw new DOMException('Account changed','AbortError');
-    if(!/^[a-f0-9]{32}$/.test(value.revision || '') || !Array.isArray(value.accounts))throw new Error('Invalid account response. Update the Tinglan companion');
+    if(!/^[a-f0-9]{32}$/.test(value.revision || '') || !Array.isArray(value.accounts))throw new Error(tr("Invalid account response. Update the Tinglan companion"));
     const changed=!!this.accountRevision && this.accountRevision!==value.revision;
     this.accountRevision=value.revision;if(changed)await this.accountChanged();return {...value,changed};
   }

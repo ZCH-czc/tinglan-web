@@ -39,17 +39,17 @@ self.addEventListener('message',event=>{
   event.waitUntil((async()=>{
     try {
       const client=await self.clients.get(event.source?.id);
-      if(!client || new URL(client.url).origin!==self.location.origin)throw new Error('Invalid download request origin');
+      if(!client || new URL(client.url).origin!==self.location.origin)throw new Error("Invalid download request origin");
       const service=await downloadService(),data=event.data;
       let job;
       if(data.action==='enqueue')job=await service.enqueue(data);
       else if(data.action==='cancel')await service.cancel(typeof data.id==='string'?data.id:'',typeof data.token==='string'?data.token:'');
       else if(data.action==='started')service.started(data.token,data.ok);
       else if(data.action==='fallback')await service.fallback(data.token);
-      else if(data.action!=='status')throw new Error('Unknown download action');
+      else if(data.action!=='status')throw new Error("Unknown download action");
       port.postMessage({protocol:1,job,rows:await service.publish()});
       await service.run();
-    }catch(error){port.postMessage({error:error.message || 'Background downloads unavailable'});}
+    }catch(error){port.postMessage({error:error.message || "Background downloads unavailable"});}
   })());
 });
 for(const name of ['backgroundfetchsuccess','backgroundfetchfailure','backgroundfetchabort'])self.addEventListener(name,event=>event.waitUntil(downloadService().then(service=>service.complete(event))));

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {hostSetTimeout,hostClearTimeout} from './host-api.mjs';
 
 /** WebViews can leave async clipboard promises unresolved. Preserve the click gesture and input focus. */
@@ -15,15 +16,15 @@ export class ClipboardWriter {
     finally{document.removeEventListener('copy',onCopy,true);input.remove();try{active?.focus({preventScroll:true});if(selection && selection.start!==null)active.setSelectionRange(selection.start,selection.end,selection.direction);}catch{/* A removed editor cannot receive focus. */}}
   }
   async write(text) {
-    if(typeof text!=='string' || !text.length)throw new Error('Nothing to copy');
+    if(typeof text!=='string' || !text.length)throw new Error(tr("Nothing to copy"));
     const clipboard=this.host.navigator?.clipboard;
-    if(!clipboard?.writeText){if(this.immediate(text))return;throw new Error('Copying is unsupported. Select the text and copy manually');}
-    if(this.pending)throw new Error('The previous copy is still pending. Select the text and copy manually');
+    if(!clipboard?.writeText){if(this.immediate(text))return;throw new Error(tr("Copying is unsupported. Select the text and copy manually"));}
+    if(this.pending)throw new Error(tr("The previous copy is still pending. Select the text and copy manually"));
     const pending=Promise.resolve(clipboard.writeText(text));this.pending=pending;
     pending.then(()=>{if(this.pending===pending)this.pending=null;},()=>{if(this.pending===pending)this.pending=null;});
     let timer;
-    try{await Promise.race([pending,new Promise((_,reject)=>{timer=this.setTimer(()=>reject(new Error('The browser did not confirm copying. Select the text and copy manually')),this.timeoutMs);})]);}
-    catch(error){if(error.name==='NotAllowedError')throw new Error('Copying was denied. Select the text and copy manually');throw error;}
+    try{await Promise.race([pending,new Promise((_,reject)=>{timer=this.setTimer(()=>reject(new Error(tr("The browser did not confirm copying. Select the text and copy manually"))),this.timeoutMs);})]);}
+    catch(error){if(error.name==='NotAllowedError')throw new Error(tr("Copying was denied. Select the text and copy manually"));throw error;}
     finally{this.clearTimer(timer);}
   }
 }

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {hostSetTimeout,hostClearTimeout} from './host-api.mjs';
 import {PlaybackRecovery,PLAYBACK_LIMITS,playbackFailure} from './playback-recovery.mjs';
 import {playbackTask} from './playback-task.mjs';
@@ -50,7 +51,7 @@ export class BrowserPlayback {
     for(const event of ['seeking','seeked','ratechange'])this.audio.addEventListener(event,()=>{this.stable=null;this.listeningSample(true);});
     this.onOnline=()=>{if(this.waitingNetwork && this.desiredPlaying && !this.suspended){
       this.waitingNetwork=false;
-      if(this.policy.resumeNetwork())this.reload();else this.fail('Connection not restored. Tap Play to retry');
+      if(this.policy.resumeNetwork())this.reload();else this.fail(tr("Connection not restored. Tap Play to retry"));
     }};
     events?.addEventListener?.('online',this.onOnline);this.bindMediaSession();
   }
@@ -82,7 +83,7 @@ export class BrowserPlayback {
       this.bufferTimer=null;if(this.buffer!==watch || !this.owns(watch.revision) || !this.desiredPlaying)return;
       const remaining=this.limits.bufferMs-(this.now()-watch.at);
       if(remaining>0){this.bufferTimer=this.timers.setTimeout(check,remaining);this.bufferTimer?.unref?.();return;}
-      this.clearBuffer();this.mediaFailure(2,Object.assign(new Error('Buffering is taking too long. Checking playback source'),{code:'buffer-timeout'}));
+      this.clearBuffer();this.mediaFailure(2,Object.assign(new Error(tr("Buffering is taking too long. Checking playback source")),{code:'buffer-timeout'}));
     };
     this.bufferTimer=this.timers.setTimeout(check,this.limits.bufferMs);this.bufferTimer?.unref?.();
   }
@@ -102,7 +103,7 @@ export class BrowserPlayback {
     try {
       const value=await playbackTask(()=>this.store.sourceFor?this.store.sourceFor(this.trackId,controller.signal):this.store.read('media',this.trackId),{signal:controller.signal,timeoutMs:this.limits.sourceMs,timers:this.timers});
       if(!this.owns(revision))return false;
-      if(!(value instanceof Blob) && !value?.url)throw Object.assign(new Error('Audio file missing. Import it again'),{code:'missing-local'});
+      if(!(value instanceof Blob) && !value?.url)throw Object.assign(new Error(tr("Audio file missing. Import it again")),{code:'missing-local'});
       this.ownedUrl=value instanceof Blob;this.url=this.ownedUrl?URL.createObjectURL(value):new URL(value.url,globalThis.location?.href || 'http://localhost/').href;
       this.failed=false;this.audio.src=this.url;this.audio.load();this.applyPendingSeek();this.updateMediaMetadata();
       if(this.desiredPlaying){this.armBuffer();await this.play(revision);}
@@ -140,7 +141,7 @@ export class BrowserPlayback {
     this.handling=revision;this.listeningSample();const position=this.position();this.engine.setPosition(position);this.pendingSeek=position;this.seekPending=true;this.failed=true;this.clearBuffer();this.stable=null;
     let issue=error;
     if(!this.ownedUrl && this.store.diagnose){
-      this.setNotice('Checking playback connection…');this.setStatus('buffering');const controller=this.probeAbort=new AbortController();
+      this.setNotice(tr("Checking playback connection…"));this.setStatus('buffering');const controller=this.probeAbort=new AbortController();
       try{const result=await playbackTask(()=>this.store.diagnose(this.url,controller.signal),{signal:controller.signal,timeoutMs:this.limits.diagnosticMs,timers:this.timers,code:'diagnostic-timeout'});if(result?.failure)issue=result.failure;}
       catch(error){if(typeof error.code==='string' && error.status)issue=error;}
       finally{controller.abort();if(this.probeAbort===controller)this.probeAbort=null;}
@@ -156,19 +157,19 @@ export class BrowserPlayback {
     this.listeningSample();const position=this.position();this.engine.setPosition(position);this.pendingSeek=position;this.seekPending=true;
     this.failed=true;this.audio.pause();this.clearBuffer();this.stable=null;
     if(action==='wait'){
-      if(this.policy.networkResumes>=PLAYBACK_LIMITS.networkResumes){this.fail('Still offline. Connect and tap Play to retry');return;}
+      if(this.policy.networkResumes>=PLAYBACK_LIMITS.networkResumes){this.fail(tr("Still offline. Connect and tap Play to retry"));return;}
       ++this.revision;this.cancelWork();this.waitingNetwork=true;this.setNotice(failure.message);this.setStatus('waiting-network');return;
     }
     if(action==='refresh' || action==='skip'){
       const owner=++this.revision;this.cancelWork();
-      this.setNotice(action==='refresh'?failure.message:`Unable to connect. Trying the next track（${this.policy.skipped}/${PLAYBACK_LIMITS.skips}）`);this.setStatus('buffering');
+      this.setNotice(action==='refresh'?failure.message:tr("Unable to connect. Trying the next track（{0}/{1}）", this.policy.skipped, PLAYBACK_LIMITS.skips));this.setStatus('buffering');
       this.delayTimer=this.timers.setTimeout(()=>{
         this.delayTimer=null;if(!this.owns(owner) || !this.desiredPlaying)return;
-        if(action==='refresh')this.reload();else {const next=this.engine.nextTrack(false);if(next)this.select(next,{play:true,position:0},true);else this.fail('Unable to continue this queue. Retry later');}
+        if(action==='refresh')this.reload();else {const next=this.engine.nextTrack(false);if(next)this.select(next,{play:true,position:0},true);else this.fail(tr("Unable to continue this queue. Retry later"));}
       },this.limits.backoffMs);this.delayTimer?.unref?.();return;
     }
     if(failure.retryAfter)this.retryNotBefore=this.now()+failure.retryAfter*1000;
-    this.fail(failure.kind==='recoverable'?'Content unavailable. Automatic retries stopped; retry manually or choose another track':failure.message,failure.kind==='gesture'?'paused':'error');
+    this.fail(failure.kind==='recoverable'?tr("Content unavailable. Automatic retries stopped; retry manually or choose another track"):failure.message,failure.kind==='gesture'?'paused':'error');
   }
   fail(message,status='error'){
     ++this.revision;this.cancelWork();this.failed=true;this.desiredPlaying=false;this.audio.pause();this.setNotice('');this.setStatus(status);this.callbacks.error(message);
@@ -180,8 +181,8 @@ export class BrowserPlayback {
   }
   async retry(){
     if(this.suspended || !this.engine.currentId())return false;
-    if(this.retryNotBefore>this.now()){this.callbacks.error(`Platform requests are cooling down. Retry in ${Math.ceil((this.retryNotBefore-this.now())/1000)} seconds`);return false;}
-    this.policy.reset();this.desiredPlaying=true;this.setNotice('Reconnecting while keeping your position…');this.callbacks.recovered?.();
+    if(this.retryNotBefore>this.now()){this.callbacks.error(tr("Platform requests are cooling down. Retry in {0} seconds", Math.ceil((this.retryNotBefore-this.now())/1000)));return false;}
+    this.policy.reset();this.desiredPlaying=true;this.setNotice(tr("Reconnecting while keeping your position…"));this.callbacks.recovered?.();
     if(!this.trackId || this.trackId!==this.engine.currentId())return this.select(this.engine.currentId(),{play:true,position:this.engine.positionMs?.() || 0});
     return this.reload();
   }
@@ -222,7 +223,7 @@ export class BrowserPlayback {
     if (!('mediaSession' in navigator) || !globalThis.MediaMetadata) return;
     const track = this.callbacks.metadata?.(this.trackId) || JSON.parse(this.engine.currentTrackJson()); if (!track) return;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: track.title, artist: track.artist, album: track.album || `Tinglan · ${{qq:'QQ Music',bili:'Bilibili',netease:'NetEase Music'}[track.source] || 'Local music'}`,
+      title: track.title, artist: track.artist, album: track.album || tr("Tinglan · {0}",{qq:tr("QQ Music"),bili:'Bilibili',netease:tr("NetEase Music")}[track.source] || tr("Local music")),
       artwork: artworkUrl ? [{ src: artworkUrl, sizes: '640x640', type: 'image/webp' }] : [],
     });
   }

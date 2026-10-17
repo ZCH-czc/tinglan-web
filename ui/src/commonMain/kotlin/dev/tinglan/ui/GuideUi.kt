@@ -28,12 +28,12 @@ internal fun Modifier.guideTarget(id:String):Modifier=composed {
 }
 private data class Guide(val id:String,val anchor:String,val title:String,val copy:String)
 private fun currentGuide():Guide?=when {
-    model.queueOpen->Guide("queue","queue-controls","Manage the queue","The current track is centered. Hold the handle to reorder, swipe left to remove, and undo mistakes. Lock the queue to prevent changes.")
-    model.player->Guide("player","player-seek","Keep the music going","Drag the seek bar to jump. Tap a lyric to seek, or hold to copy. Choose a lyrics source to switch between platform lyrics and Kugou.")
-    model.page=="library"->Guide("library","library-tabs","Organize your library","Swipe between tabs; the indicator follows your gesture. Reorder tabs from the menu. Playlists support backgrounds, tags, and selection actions.")
-    model.page=="settings"->Guide("settings","settings-search","Find settings quickly","Search settings by name or keyword. Adjust fonts, animation speed, lyrics size, and feature guides here.")
-    model.page=="search"->Guide("search","top-actions","Discover more music","Search tracks or artists. Collapse individual platform results and choose a preferred platform in settings. Save tracks to organize them in your library.")
-    model.page=="home"->Guide("home","top-actions","Start here","Use the shortcut bar for listening history, new releases, and settings. Accounts and recognition are in settings. Imported music, artwork, lyrics, and playlists stay on this device.")
+    model.queueOpen->Guide("queue","queue-controls",tr("Manage the queue"),tr("The current track is centered. Hold the handle to reorder, swipe left to remove, and undo mistakes. Lock the queue to prevent changes."))
+    model.player->Guide("player","player-seek",tr("Keep the music going"),tr("Drag the seek bar to jump. Tap a lyric to seek, or hold to copy. Choose a lyrics source to switch between platform lyrics and Kugou."))
+    model.page=="library"->Guide("library","library-tabs",tr("Organize your library"),tr("Swipe between tabs; the indicator follows your gesture. Reorder tabs from the menu. Playlists support backgrounds, tags, and selection actions."))
+    model.page=="settings"->Guide("settings","settings-search",tr("Find settings quickly"),tr("Search settings by name or keyword. Adjust fonts, animation speed, lyrics size, and feature guides here."))
+    model.page=="search"->Guide("search","top-actions",tr("Discover more music"),tr("Search tracks or artists. Collapse individual platform results and choose a preferred platform in settings. Save tracks to organize them in your library."))
+    model.page=="home"->Guide("home","top-actions",tr("Start here"),tr("Use the shortcut bar for listening history, new releases, and settings. Accounts and recognition are in settings. Imported music, artwork, lyrics, and playlists stay on this device."))
     else->null
 }
 /** The shared modal portal owns focus, pointer and wheel events throughout the guide. */
@@ -63,7 +63,7 @@ private fun currentGuide():Guide?=when {
                 Column(Modifier.heightIn(max=(if(below)maxHeight-offset-18.dp else with(density){highlight.top.toDp()}-36.dp).coerceAtLeast(120.dp)).verticalScroll(rememberScrollState()).padding(22.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                     Text(guide.title,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold)
                     Text(guide.copy,style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End){TextButton(onClick={command("setting",payload("key" to "guideEnabled","value" to "false"))}){Text("Dismiss guide")};Button(onClick={command("guide-seen",guide.id)}){Text("Got it")}}
+                    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.End){TextButton(onClick={command("setting",payload("key" to "guideEnabled","value" to "false"))}){Text(tr("Dismiss guide"))};Button(onClick={command("guide-seen",guide.id)}){Text(tr("Got it"))}}
                 }
             }
         }

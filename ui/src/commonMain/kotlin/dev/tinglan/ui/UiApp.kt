@@ -43,8 +43,8 @@ private val Shape = RoundedCornerShape(20.dp)
 internal fun motionDuration(ms:Int)=if(model.reduced)0 else if(model.motionPreset=="slow")(ms*1.5f).toInt()else ms
 private fun duration(ms:Int)=motionDuration(ms)
 internal fun payload(vararg fields: Pair<String, String>) = buildJsonObject { fields.forEach { put(it.first, it.second) } }.toString()
-internal fun platformName(id: String) = when(id) { "qq" -> "QQ Music"; "bili" -> "Bilibili"; "netease" -> "NetEase Music"; else -> "Local music" }
-internal fun quantityLabel(count: Number, noun: String) = "$count $noun${if(count.toLong()==1L)""else "s"}"
+internal fun platformName(id: String) = when(id) { "qq" -> tr("QQ Music"); "bili" -> "Bilibili"; "netease" -> tr("NetEase Music"); else -> tr("Local music") }
+internal fun quantityLabel(count: Number, noun: String) = if(uiLanguage=="zh-CN")"$count ${if(noun=="track")"首歌曲"else "项"}"else "$count $noun${if(count.toLong()==1L)""else "s"}"
 internal fun sourceColor(id: String) = when(id) { "qq" -> Color(0xFF1CB578); "bili" -> Color(0xFFEC7298); "netease" -> Color(0xFFE55055); else -> Color(0xFF247583) }
 
 @Composable fun TinglanApp() {
@@ -66,10 +66,10 @@ internal fun sourceColor(id: String) = when(id) { "qq" -> Color(0xFF1CB578); "bi
                 if (!model.ready) {
                     Column(Modifier.align(Alignment.Center), horizontalAlignment=Alignment.CenterHorizontally, verticalArrangement=Arrangement.spacedBy(24.dp)) {
                         Glyph("brand", Modifier.size(52.dp), target.primary)
-                        Text("Tinglan", style=MaterialTheme.typography.headlineLarge)
+                        Text(tr("Tinglan"), style=MaterialTheme.typography.headlineLarge)
                         if(model.error.isEmpty()) CircularProgressIndicator(Modifier.size(26.dp), strokeWidth=2.dp)
-                        Text(model.error.ifEmpty { "Preparing your music…" }, color=target.onSurfaceVariant)
-                        if(model.error.isNotEmpty()) Button(onClick={command("reload")}) { Text("Reload") }
+                        Text(trMessage(model.error).ifEmpty { tr("Preparing your music…") }, color=target.onSurfaceVariant)
+                        if(model.error.isNotEmpty()) Button(onClick={command("reload")}) { Text(tr("Reload")) }
                     }
                 } else if(model.page=="lan-sender") {
                     Box(Modifier.fillMaxSize(),contentAlignment=Alignment.TopCenter) {LanSenderPage()}
@@ -120,12 +120,12 @@ internal fun sourceColor(id: String) = when(id) { "qq" -> Color(0xFF1CB578); "bi
                     UpdateToast(Modifier.align(Alignment.TopCenter).padding(top=12.dp))
                     AnimatedVisibility(model.toast.isNotEmpty(), modifier=Modifier.align(Alignment.TopCenter).padding(top=18.dp), enter=fadeIn(tween(duration(130)))+slideInVertically { -it/2 }, exit=fadeOut(tween(duration(100)))) {
                         Surface(shape=RoundedCornerShape(16.dp), color=target.inverseSurface, shadowElevation=3.dp, modifier=Modifier.widthIn(max=520.dp).padding(horizontal=16.dp)) {
-                            Text(model.toast, color=target.inverseOnSurface, modifier=Modifier.padding(18.dp,12.dp))
+                            Text(trMessage(model.toast), color=target.inverseOnSurface, modifier=Modifier.padding(18.dp,12.dp))
                         }
                     }
                     if(model.busy) Surface(Modifier.align(Alignment.TopCenter).widthIn(max=540.dp).fillMaxWidth().padding(14.dp), shape=Shape, color=target.surfaceContainer, shadowElevation=2.dp) {
                         Column(Modifier.padding(16.dp), verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment=Alignment.CenterVertically) { Text(model.message, Modifier.weight(1f), maxLines=2); if(model.importingCollection)Action("close","Cancel playlist save") {command("collection-cancel")}else if(model.dialog=="backup-progress") Action("close","Cancel task") {command("cancel-backup")} }
+                            Row(verticalAlignment=Alignment.CenterVertically) { Text(trMessage(model.message), Modifier.weight(1f), maxLines=2); if(model.importingCollection)Action("close",tr("Cancel playlist save")) {command("collection-cancel")}else if(model.dialog=="backup-progress") Action("close",tr("Cancel task")) {command("cancel-backup")} }
                             LinearProgressIndicator(progress={model.progress.coerceIn(0f,1f)}, modifier=Modifier.fillMaxWidth(), strokeCap=StrokeCap.Round)
                         }
                     }
@@ -136,18 +136,18 @@ internal fun sourceColor(id: String) = when(id) { "qq" -> Color(0xFF1CB578); "bi
     }
 }
 
-private val destinations = listOf(Triple("home","home","Home"),Triple("search","search","Search"),Triple("library","library","Library"))
+private val destinations get() = listOf(Triple("home","home",tr("Home")),Triple("search","search",tr("Search")),Triple("library","library",tr("Library")))
 @Composable private fun SideNavigation() {
     Column(Modifier.width(218.dp).fillMaxHeight().background(MaterialTheme.colorScheme.surfaceContainer.copy(alpha=.5f)).padding(20.dp), verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.padding(vertical=24.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(12.dp)) { Glyph("brand", Modifier.size(32.dp), MaterialTheme.colorScheme.primary); Text("Tinglan",style=MaterialTheme.typography.headlineMedium, fontWeight=FontWeight.Bold) }
+        Row(Modifier.padding(vertical=24.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(12.dp)) { Glyph("brand", Modifier.size(32.dp), MaterialTheme.colorScheme.primary); Text(tr("Tinglan"),style=MaterialTheme.typography.headlineMedium, fontWeight=FontWeight.Bold) }
         destinations.forEach { (id,icon,title) ->
             FlatSelectableSurface(selected=model.page==id,onClick={command("navigate",id)},shape=RoundedCornerShape(16.dp),color=Color.Transparent) {
                 Row(Modifier.fillMaxWidth().padding(16.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) { Glyph(icon,color=if(model.page==id)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant); Text(title, fontWeight=if(model.page==id)FontWeight.SemiBold else FontWeight.Normal) }
             }
         }
         Spacer(Modifier.weight(1f))
-        Text("Your music, wherever you are", color=MaterialTheme.colorScheme.onSurfaceVariant, style=MaterialTheme.typography.bodySmall)
-        Text("Web · 0.31.1",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.labelSmall)
+        Text(tr("Your music, wherever you are"), color=MaterialTheme.colorScheme.onSurfaceVariant, style=MaterialTheme.typography.bodySmall)
+        Text("Web · 0.31.2",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.labelSmall)
     }
 }
 @Composable private fun BottomNavigation() {
@@ -167,13 +167,13 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 }
 @Composable private fun TopActions(wide: Boolean) {
     Row(Modifier.fillMaxWidth().height(58.dp).padding(start=20.dp,end=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.End) {
-        if(model.page=="settings")Text("Settings",Modifier.weight(1f),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
+        if(model.page=="settings")Text(tr("Settings"),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
         Surface(modifier=Modifier.guideTarget("top-actions"),shape=RoundedCornerShape(28.dp),color=MaterialTheme.colorScheme.surfaceContainerLow,
             border=BorderStroke(.5.dp,MaterialTheme.colorScheme.onSurface.copy(alpha=.09f)),shadowElevation=1.dp) {
             Row {
-                PrimaryAction("clock","Recently played") {command("navigate","library");command("tab","recent")}
-                PrimaryAction("new-release","New releases") {command("search-history-use","New music")}
-                PrimaryAction("settings","Settings") {command("navigate","settings")}
+                PrimaryAction("clock",tr("Recently played")) {command("navigate","library");command("tab","recent")}
+                PrimaryAction("new-release",tr("New releases")) {command("search-history-use",tr("New music"))}
+                PrimaryAction("settings",tr("Settings")) {command("navigate","settings")}
             }
         }
     }
@@ -213,8 +213,8 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
                     Text(song.title,maxLines=1,overflow=TextOverflow.Ellipsis,fontWeight=FontWeight.SemiBold,color=if(current)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                     Text((if(queued && song.queueIndex>=0)"${song.queueIndex+1} · "else "")+song.artist+(if(song.duration>0)" · ${timestamp(song.duration)}"else "")+(if(!compact && song.album.isNotEmpty())" · ${song.album}"else ""),maxLines=1,overflow=TextOverflow.Ellipsis,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
                 }
-                if(!compact && !queued && onSelect==null)Action(if(song.favorite)"liked"else "heart","Favorite ${song.title}",color=if(song.favorite)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant){command("favorite",song.id)}
-                if(onSelect==null)Action("more","More actions: ${song.title}"){command("song-menu",payload("id" to song.id,"context" to context,"queueKey" to song.queueKey))}
+                if(!compact && !queued && onSelect==null)Action(if(song.favorite)"liked"else "heart",tr("Favorite {0}", song.title),color=if(song.favorite)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant){command("favorite",song.id)}
+                if(onSelect==null)Action("more",tr("More actions: {0}", song.title)){command("song-menu",payload("id" to song.id,"context" to context,"queueKey" to song.queueKey))}
             }
         }
     }
@@ -233,28 +233,28 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
         item {
             Surface(shape=RoundedCornerShape(26.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.09f)) {
                 Column(Modifier.fillMaxWidth().padding(28.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
-                    Text("A little more music",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
-                    Text(if(model.staticHosting)"Import music and keep your favorites close. Tracks stay in this device's browser."else "Discover familiar sounds and keep your own music together.",color=MaterialTheme.colorScheme.onSurfaceVariant)
-                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) { Button(onClick={command("navigate","search")},shape=RoundedCornerShape(14.dp)) {Glyph("search",Modifier.size(18.dp),MaterialTheme.colorScheme.onPrimary);Spacer(Modifier.width(8.dp));Text("Find a song")}; TextButton(onClick={command("import")}) {Text("Import music")} }
+                    Text(tr("A little more music"),style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
+                    Text(if(model.staticHosting)tr("Import music and keep your favorites close. Tracks stay in this device's browser.")else tr("Discover familiar sounds and keep your own music together."),color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) { Button(onClick={command("navigate","search")},shape=RoundedCornerShape(14.dp)) {Glyph("search",Modifier.size(18.dp),MaterialTheme.colorScheme.onPrimary);Spacer(Modifier.width(8.dp));Text(tr("Find a song"))}; TextButton(onClick={command("import")}) {Text(tr("Import music"))} }
                 }
             }
         }
         if(model.songs.isNotEmpty()) {
-            item {Text("Recently added",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
+            item {Text(tr("Recently added"),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)}
             items(model.songs.take(5),key={"recent-${it.id}"}) {SongRow(it,"home")}
         }
         if(model.staticHosting) item {
             Surface(shape=RoundedCornerShape(22.dp),color=MaterialTheme.colorScheme.surfaceContainerLow) {
                 Column(Modifier.fillMaxWidth().padding(22.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text("GitHub Pages · Local music edition",style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
-                    Text("Local playback, playlists, lyrics, and backups work here. Platform search, sign-in, video, and live streams require the companion running on your computer. Open its local URL to use them.",color=MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick={command("navigate","library")}) {Text("Open library")}
+                    Text(tr("GitHub Pages · Local music edition"),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
+                    Text(tr("Local playback, playlists, lyrics, and backups work here. Platform search, sign-in, video, and live streams require the companion running on your computer. Open its local URL to use them."),color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick={command("navigate","library")}) {Text(tr("Open library"))}
                 }
             }
         }
         if(!model.staticHosting) {
-        item {TextButton(onClick={command("following-open")}) {Glyph("feed",Modifier.size(20.dp),sourceColor("bili"));Spacer(Modifier.width(9.dp));Text("Bilibili Following feed & UP creator")}}
-        item {Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text("Across your platforms",Modifier.weight(1f),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Action("refresh","Refresh recommendations") {command("refresh-home")}}}
+        item {TextButton(onClick={command("following-open")}) {Glyph("feed",Modifier.size(20.dp),sourceColor("bili"));Spacer(Modifier.width(9.dp));Text(tr("Bilibili Following feed & UP creator"))}}
+        item {Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text(tr("Across your platforms"),Modifier.weight(1f),style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold);Action("refresh",tr("Refresh recommendations")) {command("refresh-home")}}}
         model.sections.forEach { section ->
             item(key="heading-${section.id}") {PlatformHeading(section,false)}
             if(section.loading && section.songs.isEmpty()) item {LoadingRows()}
@@ -268,12 +268,12 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
     Row(Modifier.fillMaxWidth().padding(horizontal=16.dp),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically) {
         (if(model.staticHosting)listOf("local" to "folder")else listOf("all" to "library","qq" to "qq","bili" to "bili","netease" to "netease","local" to "folder")).forEach { (id,icon) ->
             val selected=model.source==id
-            Column(Modifier.width(48.dp).clip(RoundedCornerShape(12.dp)).semantics {contentDescription=if(id=="all")"All platforms" else platformName(id);this.selected=selected}.clickable {command("search-source",id)}.padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)) {
+            Column(Modifier.width(48.dp).clip(RoundedCornerShape(12.dp)).semantics {contentDescription=if(id=="all")tr("All platforms") else platformName(id);this.selected=selected}.clickable {command("search-source",id)}.padding(vertical=10.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(7.dp)) {
                 Glyph(icon,color=if(selected)MaterialTheme.colorScheme.primary else if(id=="all")MaterialTheme.colorScheme.onSurfaceVariant else sourceColor(id))
                 Box(Modifier.width(22.dp).height(3.dp).clip(RoundedCornerShape(2.dp)).background(if(selected)MaterialTheme.colorScheme.primary else Color.Transparent))
             }
         }
-        Spacer(Modifier.weight(1f));if(!model.staticHosting)Action("settings","Search preferences") {command("dialog","search-preference")}
+        Spacer(Modifier.weight(1f));if(!model.staticHosting)Action("settings",tr("Search preferences")) {command("dialog","search-preference")}
     }
 }
 @Composable private fun SearchPage(state:LazyListState,data:UiModel) {
@@ -287,29 +287,29 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
         Surface(shape=RoundedCornerShape(22.dp),color=MaterialTheme.colorScheme.surfaceContainer,modifier=Modifier.padding(horizontal=24.dp,vertical=12.dp).fillMaxWidth()) {
             Row(Modifier.padding(horizontal=16.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
                 Glyph("search",color=MaterialTheme.colorScheme.onSurfaceVariant)
-                TextField(value=text,onValueChange={text=it;if(it.composition==null)command("search-query",it.text)else command("search-composing")},keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={command("search-submit");keyboard?.hide()}),modifier=Modifier.weight(1f),placeholder={Text(if(model.staticHosting)"Search library tracks or artists"else "Search tracks, videos, or artists")},singleLine=true,colors=TextFieldDefaults.colors(focusedContainerColor=Color.Transparent,unfocusedContainerColor=Color.Transparent,focusedIndicatorColor=Color.Transparent,unfocusedIndicatorColor=Color.Transparent))
-                if(text.text.isNotEmpty()) Action("close","Clear search") {text=TextFieldValue("");command("search-query","")}
+                TextField(value=text,onValueChange={text=it;if(it.composition==null)command("search-query",it.text)else command("search-composing")},keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),keyboardActions=KeyboardActions(onSearch={command("search-submit");keyboard?.hide()}),modifier=Modifier.weight(1f),placeholder={Text(if(model.staticHosting)"Search library tracks or artists"else tr("Search tracks, videos, or artists"))},singleLine=true,colors=TextFieldDefaults.colors(focusedContainerColor=Color.Transparent,unfocusedContainerColor=Color.Transparent,focusedIndicatorColor=Color.Transparent,unfocusedIndicatorColor=Color.Transparent))
+                if(text.text.isNotEmpty()) Action("close",tr("Clear search")) {text=TextFieldValue("");command("search-query","")}
             }
         }
         FilterIcons()
         Row(Modifier.fillMaxWidth().padding(horizontal=24.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            (if(model.staticHosting)listOf("songs" to "Local music")else listOf("songs" to "Tracks / Videos","creators" to "UP creator / Artists")).forEach {(id,label)->TextButton(onClick={command("search-kind",id)}) {
+            (if(model.staticHosting)listOf("songs" to "Local music")else listOf("songs" to tr("Tracks / Videos"),"creators" to tr("UP creator / Artists"))).forEach {(id,label)->TextButton(onClick={command("search-kind",id)}) {
                 Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(6.dp)) {Text(label,color=if(model.searchKind==id)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant);Box(Modifier.width(24.dp).height(2.dp).background(if(model.searchKind==id)MaterialTheme.colorScheme.primary else Color.Transparent))}
             }}
         }
         LazyColumn(state=state,contentPadding=PaddingValues(start=24.dp,end=24.dp,top=14.dp,bottom=190.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
             if(model.query.isBlank()) {
                 if(model.searchHistory.isNotEmpty()) {
-                    item {Row(Modifier.fillMaxWidth().padding(top=8.dp),verticalAlignment=Alignment.CenterVertically) {Text("Recent searches",Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Action("delete","Clear search history"){command("search-history-clear")}}}
-                    item {Text("Recent 30 entries · Stored in this browser only",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
+                    item {Row(Modifier.fillMaxWidth().padding(top=8.dp),verticalAlignment=Alignment.CenterVertically) {Text(tr("Recent searches"),Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Action("delete",tr("Clear search history")){command("search-history-clear")}}}
+                    item {Text(tr("Recent 30 entries · Stored in this browser only"),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
                     item {SearchHistoryGrid(model.searchHistory)}
-                }else item {EmptyState("Find your next favorite",if(model.staticHosting)"Search imported music by title or artist."else "Search music platforms by title or artist.","search")}
+                }else item {EmptyState(tr("Find your next favorite"),if(model.staticHosting)"Search imported music by title or artist."else tr("Search music platforms by title or artist."),"search")}
             }
             else {
                 if(model.source in listOf("all","local")) {
-                    item {Text("Library",style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(vertical=12.dp),fontWeight=FontWeight.Bold)}
+                    item {Text(tr("Library"),style=MaterialTheme.typography.titleMedium,modifier=Modifier.padding(vertical=12.dp),fontWeight=FontWeight.Bold)}
                     items(model.songs.chunked(resultColumns),key={"local-${it.first().id}"}) {row->SearchSongRow(row,resultColumns,"search-local")}
-                    if(model.songs.isEmpty()) item {Text("No matching tracks in your library",color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(vertical=12.dp))}
+                    if(model.songs.isEmpty()) item {Text(tr("No matching tracks in your library"),color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.padding(vertical=12.dp))}
                 }
                 model.sections.forEach { section ->
                     item(key="search-heading-${section.id}") {PlatformHeading(section,true)}
@@ -317,7 +317,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
                     if(section.error.isNotEmpty()) item {ErrorCard(section.error) {command("search-retry",section.id)}}
                     items(section.songs.chunked(resultColumns),key={"result-${section.id}-${it.first().id}"}) {row->SearchSongRow(row,resultColumns,"section:${section.id}")}
                     items(section.creators.chunked(resultColumns),key={"creator-${section.id}-${it.first().id}"}) {row->Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)){row.forEach{creator->Box(Modifier.weight(1f)){CreatorResultRow(creator)}};repeat(resultColumns-row.size){Spacer(Modifier.weight(1f))}}}
-                    if(section.more) item {TextButton(onClick={command("search-more",section.id)}) {Text("Load more ${section.title} results")}}
+                    if(section.more) item {TextButton(onClick={command("search-more",section.id)}) {Text(tr("Load more {0} results", section.title))}}
                 }
             }
         }
@@ -329,9 +329,9 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 }
 @Composable private fun PlatformHeading(section:PlatformSection,collapse:Boolean) {
     Row(Modifier.fillMaxWidth().padding(top=14.dp,bottom=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-        Glyph(section.id,color=sourceColor(section.id));Text(section.title,Modifier.weight(1f),fontWeight=FontWeight.Bold)
+        Glyph(section.id,color=sourceColor(section.id));Text(trMessage(section.title),Modifier.weight(1f),fontWeight=FontWeight.Bold)
         if(section.loading) CircularProgressIndicator(Modifier.size(18.dp),strokeWidth=2.dp)
-        if(collapse) Action(if(section.collapsed)"add" else "down","${if(section.collapsed)"Expand" else "Collapse"} ${section.title}") {command("collapse",section.id)}
+        if(collapse) Action(if(section.collapsed)"add" else "down","${if(section.collapsed)tr("Expand") else tr("Collapse")} ${section.title}") {command("collapse",section.id)}
     }
 }
 @Composable internal fun LoadingRows() {
@@ -343,7 +343,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 }
 @Composable internal fun ErrorCard(message:String,retry:()->Unit) {
     Surface(shape=Shape,color=MaterialTheme.colorScheme.surfaceContainer) {
-        Row(Modifier.fillMaxWidth().padding(16.dp),verticalAlignment=Alignment.CenterVertically) {Text(message,Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick=retry) {Text("Retry")}}
+        Row(Modifier.fillMaxWidth().padding(16.dp),verticalAlignment=Alignment.CenterVertically) {Text(trMessage(message),Modifier.weight(1f),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick=retry) {Text(tr("Retry"))}}
     }
 }
 @Composable private fun MiniPlayer() {
@@ -354,10 +354,10 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
             Row(Modifier.fillMaxWidth().padding(10.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                 Cover(song,50.dp)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {Text(song.title,maxLines=1,overflow=TextOverflow.Ellipsis,fontWeight=FontWeight.SemiBold);Text(model.playbackHint.ifEmpty {song.artist},maxLines=1,overflow=TextOverflow.Ellipsis,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
-                Action(if(song.favorite)"liked" else "heart","Favorite current track") {command("favorite",song.id)}
+                Action(if(song.favorite)"liked" else "heart",tr("Favorite current track")) {command("favorite",song.id)}
                 PlayControl(false)
                 model.cacheTasks.firstOrNull {it.active()}?.let {task->IconButton(onClick={command("cache-open")},modifier=Modifier.size(44.dp)) {CacheDownloadRing(task)}}
-                Action("queue","Open queue") {command("queue-open")}
+                Action("queue",tr("Open queue")) {command("queue-open")}
             }
             PlaybackProgress(false)
         }
@@ -366,7 +366,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 @Composable private fun PlayControl(large:Boolean,compact:Boolean=false) {
     val loading=model.status=="buffering"
     val waiting=model.status=="waiting-network"
-    IconButton(onClick={command("toggle")},modifier=Modifier.size(if(compact)56.dp else if(large)76.dp else 44.dp).semantics {contentDescription=if(waiting)"Stop waiting for connection" else if(loading)"Buffering. Tap to pause" else if(model.status=="playing")"Pause" else "Play"}) {
+    IconButton(onClick={command("toggle")},modifier=Modifier.size(if(compact)56.dp else if(large)76.dp else 44.dp).semantics {contentDescription=if(waiting)tr("Stop waiting for connection") else if(loading)tr("Buffering. Tap to pause") else if(model.status=="playing")tr("Pause") else tr("Play")}) {
         if(loading) CircularProgressIndicator(Modifier.size(if(large)44.dp else 24.dp),strokeWidth=2.5.dp)
         else Glyph(if(model.status=="playing" || waiting)"pause" else "play",Modifier.size(if(compact)32.dp else if(large)44.dp else 24.dp),MaterialTheme.colorScheme.primary)
     }
@@ -381,25 +381,25 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
             val compactLandscape=landscape && maxHeight<560.dp
             val artworkSize=minOf(maxWidth-70.dp,maxHeight*.45f,380.dp)
             Column(Modifier.fillMaxSize().padding(horizontal=if(landscape)48.dp else 24.dp,vertical=14.dp)) {
-                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Action("down","Minimize fullscreen player") {command("player-close")};Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {Text("Now playing",style=MaterialTheme.typography.labelLarge);if(song.source=="bili")TextButton(onClick={command("bili-context-open")},contentPadding=PaddingValues(horizontal=8.dp,vertical=0.dp)) {Text(model.biliInfo?.collectionTitle?.ifEmpty {"Bilibili · Episodes"} ?: "Bilibili · Episodes",style=MaterialTheme.typography.labelSmall,maxLines=1,overflow=TextOverflow.Ellipsis)}else Text(platformName(song.source),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)};Action("settings","Sound & playback device") {command("audio-open")};if(landscape)Action("queue","Open queue"){command("queue-open")};Action("more","Current track actions") {command("song-menu",payload("id" to song.id))}}
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Action("down",tr("Minimize fullscreen player")) {command("player-close")};Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {Text(tr("Now playing"),style=MaterialTheme.typography.labelLarge);if(song.source=="bili")TextButton(onClick={command("bili-context-open")},contentPadding=PaddingValues(horizontal=8.dp,vertical=0.dp)) {Text(model.biliInfo?.collectionTitle?.ifEmpty {tr("Bilibili · Episodes")} ?: tr("Bilibili · Episodes"),style=MaterialTheme.typography.labelSmall,maxLines=1,overflow=TextOverflow.Ellipsis)}else Text(platformName(song.source),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)};Action("settings",tr("Sound & playback device")) {command("audio-open")};if(landscape)Action("queue",tr("Open queue")){command("queue-open")};Action("more",tr("Current track actions")) {command("song-menu",payload("id" to song.id))}}
                 if(compactLandscape) Row(Modifier.weight(1f).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(32.dp),verticalAlignment=Alignment.CenterVertically) {
                     BoxWithConstraints(Modifier.weight(1f).fillMaxHeight(),contentAlignment=Alignment.Center) {if(showLyrics)Lyrics(Modifier.fillMaxSize())else PlayerArtwork(song,minOf(maxWidth,maxHeight,300.dp))}
                     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp)) {
                         SongTitle(song,compact=true);PlaybackProgress(true);PlayerControls(song,compact=true)
                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-                            Action(if(showLyrics)"artwork"else "lyrics",if(showLyrics)"Show artwork"else "Show lyrics") {showLyrics=!showLyrics}
+                            Action(if(showLyrics)"artwork"else "lyrics",if(showLyrics)tr("Show artwork")else tr("Show lyrics")) {showLyrics=!showLyrics}
                             LyricsSourceButton(song)
                         }
                     }
                 }else if(landscape) Row(Modifier.weight(1f).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(56.dp),verticalAlignment=Alignment.CenterVertically) {
                     Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {PlayerArtwork(song,300.dp);SongTitle(song);PlaybackProgress(true);PlayerControls(song)}
                     Column(Modifier.weight(1f).fillMaxHeight()) {
-                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text("Lyrics",Modifier.weight(1f),style=MaterialTheme.typography.titleMedium);LyricsSourceButton(song)}
+                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text(tr("Lyrics"),Modifier.weight(1f),style=MaterialTheme.typography.titleMedium);LyricsSourceButton(song)}
                         Lyrics(Modifier.weight(1f).fillMaxWidth())
                     }
                 } else {
                     BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center) {if(showLyrics) Lyrics(Modifier.fillMaxSize()) else PlayerArtwork(song,minOf(artworkSize,maxHeight,maxWidth))}
-                    Column(Modifier.widthIn(max=560.dp).fillMaxWidth().align(Alignment.CenterHorizontally).padding(bottom=18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {SongTitle(song);PlaybackProgress(true);PlayerControls(song);Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {Action(if(showLyrics)"artwork"else "lyrics",if(showLyrics)"Show artwork"else "Show lyrics") {showLyrics=!showLyrics};LyricsSourceButton(song);Action("queue","Open queue") {command("queue-open")}}}
+                    Column(Modifier.widthIn(max=560.dp).fillMaxWidth().align(Alignment.CenterHorizontally).padding(bottom=18.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {SongTitle(song);PlaybackProgress(true);PlayerControls(song);Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {Action(if(showLyrics)"artwork"else "lyrics",if(showLyrics)tr("Show artwork")else tr("Show lyrics")) {showLyrics=!showLyrics};LyricsSourceButton(song);Action("queue",tr("Open queue")) {command("queue-open")}}}
                 }
                 if(model.playbackHint.isNotEmpty())Text(model.playbackHint,modifier=Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=6.dp).semantics {liveRegion=LiveRegionMode.Polite},style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=2,overflow=TextOverflow.Ellipsis)
                 if(model.error.isNotEmpty()) ErrorCard(model.error) {command("retry-play")}
@@ -413,7 +413,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
         Box(Modifier.size(size).onGloballyPositioned {coordinates ->
             val r=coordinates.boundsInWindow()
             if(item.source=="bili")command("artwork-origin",payload("id" to item.id,"x" to (r.left/density).toString(),"y" to (r.top/density).toString(),"width" to (r.width/density).toString(),"height" to (r.height/density).toString()))
-        }.pointerInput(item.id,item.source) {if(item.source=="bili")detectTapGestures(onLongPress={command("video-open")})}.semantics {if(item.source=="bili"){contentDescription="Hold the artwork to watch the video";onLongClick {command("video-open");true}}}) {Cover(item,size,true)}
+        }.pointerInput(item.id,item.source) {if(item.source=="bili")detectTapGestures(onLongPress={command("video-open")})}.semantics {if(item.source=="bili"){contentDescription=tr("Hold the artwork to watch the video");onLongClick {command("video-open");true}}}) {Cover(item,size,true)}
     }
 }
 @Composable private fun SongTitle(song:Song,compact:Boolean=false) {
@@ -425,26 +425,26 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
     var expanded by remember(creator.id,creator.source) {mutableStateOf(false)}
     LazyColumn(state=state,modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(start=24.dp,end=24.dp,top=8.dp,bottom=180.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
         item {
-            Row(verticalAlignment=Alignment.CenterVertically) {Action("back","Return to previous page") {command("page-back")};Text(platformName(creator.source),Modifier.weight(1f),color=MaterialTheme.colorScheme.onSurfaceVariant);Action("refresh","Refresh artist page",enabled=!creator.loading) {command("creator-refresh")}}
+            Row(verticalAlignment=Alignment.CenterVertically) {Action("back",tr("Return to previous page")) {command("page-back")};Text(platformName(creator.source),Modifier.weight(1f),color=MaterialTheme.colorScheme.onSurfaceVariant);Action("refresh",tr("Refresh artist page"),enabled=!creator.loading) {command("creator-refresh")}}
             Row(Modifier.padding(vertical=18.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(18.dp)) {
                 val room=roomForCreator(creator.id,creator.source)
                 LiveCreatorAvatar(Song("creator-${creator.source}-${creator.id}",creator.name,"",cover=creator.cover,source=creator.source),92.dp,room)
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                    Text(creator.name.ifEmpty {"Loading profile…"},style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-                    if(room.isNotEmpty())Text("Live · Open the avatar to watch",style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.primary)
-                    if(creator.followers>0)Text("${creator.followers} followers",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(creator.name.ifEmpty {tr("Loading profile…")},style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+                    if(room.isNotEmpty())Text(tr("Live · Open the avatar to watch"),style=MaterialTheme.typography.labelMedium,color=MaterialTheme.colorScheme.primary)
+                    if(creator.followers>0)Text(tr("{0} followers", creator.followers),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            if(creator.description.isNotEmpty()) {Text(creator.description,maxLines=if(expanded)Int.MAX_VALUE else 4,overflow=TextOverflow.Ellipsis,color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick={expanded=!expanded}) {Text(if(expanded)"Hide description" else "Show description")}}
+            if(creator.description.isNotEmpty()) {Text(creator.description,maxLines=if(expanded)Int.MAX_VALUE else 4,overflow=TextOverflow.Ellipsis,color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick={expanded=!expanded}) {Text(if(expanded)tr("Hide description") else tr("Show description"))}}
         }
         if(creator.loading)item {LinearProgressIndicator(Modifier.fillMaxWidth())}
         if(creator.warning.isNotEmpty())item {ErrorCard(creator.warning) {command("creator-refresh")}}
         if(creator.source=="bili")item {PresenceStatus(model.presenceInfo,author=true)}
-        if(creator.source=="bili")item {Row(horizontalArrangement=Arrangement.spacedBy(16.dp)) {listOf("dynamics" to "Posts","works" to "Uploads").forEach {(id,label)->TextButton(onClick={command("creator-tab",id)}) {Text(label,fontWeight=if(data.creatorTab==id)FontWeight.Bold else FontWeight.Normal,color=if(data.creatorTab==id)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}}}}
+        if(creator.source=="bili")item {Row(horizontalArrangement=Arrangement.spacedBy(16.dp)) {listOf("dynamics" to tr("Posts"),"works" to tr("Uploads")).forEach {(id,label)->TextButton(onClick={command("creator-tab",id)}) {Text(label,fontWeight=if(data.creatorTab==id)FontWeight.Bold else FontWeight.Normal,color=if(data.creatorTab==id)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}}}}
         if(creator.source=="bili" && data.creatorTab=="dynamics")activityItems(data)
         else {
-            item {Row(verticalAlignment=Alignment.CenterVertically) {Text(if(creator.source=="bili")"Latest uploads" else "Releases",Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Action("back","Previous",enabled=creator.page>1 && !creator.loading) {command("creator-page",(creator.page-1).toString())};Text("Page ${creator.page} ",style=MaterialTheme.typography.labelMedium);Action("next","Next",enabled=creator.more && !creator.loading) {command("creator-page",(creator.page+1).toString())}}}
-            if(data.creatorSongs.isEmpty() && !creator.loading && creator.warning.isEmpty())item {EmptyState("No releases found","This artist has no available releases.","music")}
+            item {Row(verticalAlignment=Alignment.CenterVertically) {Text(if(creator.source=="bili")tr("Latest uploads") else tr("Releases"),Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Action("back",tr("Previous"),enabled=creator.page>1 && !creator.loading) {command("creator-page",(creator.page-1).toString())};Text(tr("Page {0} ", creator.page),style=MaterialTheme.typography.labelMedium);Action("next",tr("Next"),enabled=creator.more && !creator.loading) {command("creator-page",(creator.page+1).toString())}}}
+            if(data.creatorSongs.isEmpty() && !creator.loading && creator.warning.isEmpty())item {EmptyState(tr("No releases found"),tr("This artist has no available releases."),"music")}
             items(data.creatorSongs,key={it.id}) {SongRow(it,"creator:${creator.source}:${creator.id}")}
         }
     }
@@ -452,10 +452,10 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 @Composable private fun PlayerControls(song:Song,compact:Boolean=false) {
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceEvenly,verticalAlignment=Alignment.CenterVertically) {
         PlaybackOrderButton()
-        Action("previous","Previous track",Modifier.size(50.dp)) {command("previous")}
+        Action("previous",tr("Previous track"),Modifier.size(50.dp)) {command("previous")}
         PlayControl(true,compact)
-        Action("next","Next track",Modifier.size(50.dp)) {command("next")}
-        Action(if(song.favorite)"liked" else "heart","Favorite current track") {command("favorite",song.id)}
+        Action("next",tr("Next track"),Modifier.size(50.dp)) {command("next")}
+        Action(if(song.favorite)"liked" else "heart",tr("Favorite current track")) {command("favorite",song.id)}
     }
 }
 @Composable private fun Lyrics(modifier:Modifier) {
@@ -465,12 +465,12 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
     LaunchedEffect(dragging) { if(dragging) manualAt=TimeSource.Monotonic.markNow() }
     val index=lyricIndex
     LaunchedEffect(index,model.current?.id) {if(index>=0 && !state.isScrollInProgress && (manualAt?.elapsedNow()?.inWholeMilliseconds ?: 3000)>=3000) {val at=index.coerceAtMost((model.lyrics.size-1).coerceAtLeast(0));if(model.reduced)state.scrollToItem(at,-120)else state.animateScrollToItem(at,-120)}}
-    if(model.lyrics.isEmpty()) Box(modifier,contentAlignment=Alignment.Center) {Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {Text("Let the melody speak",style=MaterialTheme.typography.titleLarge);Text("Import, edit, or choose synchronized lyrics",color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick={command("lyrics-edit")}) {Text("Add lyrics")}}}
+    if(model.lyrics.isEmpty()) Box(modifier,contentAlignment=Alignment.Center) {Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {Text(tr("Let the melody speak"),style=MaterialTheme.typography.titleLarge);Text(tr("Import, edit, or choose synchronized lyrics"),color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick={command("lyrics-edit")}) {Text(tr("Add lyrics"))}}}
     else LazyColumn(state=state,modifier=modifier,contentPadding=PaddingValues(vertical=120.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         itemsIndexed(model.lyrics,key={i,_ -> i}) {i,line ->
             val active=i==index
             val alpha by animateFloatAsState(if(active)1f else .4f,tween(duration(180)))
-            Text(line.text.ifBlank {"♪"},color=MaterialTheme.colorScheme.onSurface.copy(alpha=alpha),style=MaterialTheme.typography.headlineSmall.copy(fontSize=model.lyricsSize.sp,lineHeight=(model.lyricsSize*1.5f).sp),fontWeight=if(active)FontWeight.Bold else FontWeight.Medium,modifier=Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).pointerInput(line.at,line.text) {detectTapGestures(onTap={command("seek",line.at.toString())},onLongPress={command("copy",line.text)})}.padding(12.dp).semantics {contentDescription="Lyrics ${line.text}";onClick {command("seek",line.at.toString());true};onLongClick {command("copy",line.text);true}})
+            Text(line.text.ifBlank {"♪"},color=MaterialTheme.colorScheme.onSurface.copy(alpha=alpha),style=MaterialTheme.typography.headlineSmall.copy(fontSize=model.lyricsSize.sp,lineHeight=(model.lyricsSize*1.5f).sp),fontWeight=if(active)FontWeight.Bold else FontWeight.Medium,modifier=Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).pointerInput(line.at,line.text) {detectTapGestures(onTap={command("seek",line.at.toString())},onLongPress={command("copy",line.text)})}.padding(12.dp).semantics {contentDescription=tr("Lyrics {0}", line.text);onClick {command("seek",line.at.toString());true};onLongClick {command("copy",line.text);true}})
         }
     }
 }
@@ -481,7 +481,8 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
 }
 @Composable private fun AppDialog() {
     val kind=model.dialog
-    if(kind=="search-history-clear"){TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text("Clear search history?")},text={Text("Remove recent searches from this browser.")},confirmButton={TextButton(onClick={command("search-history-clear-confirm")}){Text("Clear")}},dismissButton={TextButton(onClick={command("dialog-close")}){Text("Cancel")}});return}
+    if(kind=="language"){LanguageChoiceSheet();return}
+    if(kind=="search-history-clear"){TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text(tr("Clear search history?"))},text={Text(tr("Remove recent searches from this browser."))},confirmButton={TextButton(onClick={command("search-history-clear-confirm")}){Text(tr("Clear"))}},dismissButton={TextButton(onClick={command("dialog-close")}){Text(tr("Cancel"))}});return}
     if(kind in listOf("theme","search-preference")){BasicChoiceSheet();return}
     if(kind in listOf("library-options","library-order","playlist-edit","playlist-delete")){LibraryDialog();return}
     if(kind in listOf("font","motion-preset","lyrics-appearance","guides")){AppearanceDialog();return}
@@ -499,7 +500,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
     if(kind=="danmaku-settings") {DanmakuSettings {command("dialog-close")};return}
     if(kind=="note-editor" || kind=="note-delete") {NoteDialog();return}
     if(kind=="radio-custom" || kind=="radio-queue") {RadioDialog();return}
-    if(kind=="statistics-reset") {TinglanAlertDialog(onDismissRequest={command("dialog-close")},shape=RoundedCornerShape(26.dp),title={Text("Clear listening statistics?")},text={Text("This cannot be undone directly, but exported backups can restore the data. Music, playlists, and notes are kept. New listening will be recorded again.")},confirmButton={TextButton(onClick={command("statistics-reset-confirm")}) {Text("Clear statistics",color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton(onClick={command("dialog-close")}) {Text("Cancel")}});return}
+    if(kind=="statistics-reset") {TinglanAlertDialog(onDismissRequest={command("dialog-close")},shape=RoundedCornerShape(26.dp),title={Text(tr("Clear listening statistics?"))},text={Text(tr("This cannot be undone directly, but exported backups can restore the data. Music, playlists, and notes are kept. New listening will be recorded again."))},confirmButton={TextButton(onClick={command("statistics-reset-confirm")}) {Text(tr("Clear statistics"),color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton(onClick={command("dialog-close")}) {Text(tr("Cancel"))}});return}
     if(kind=="backup-progress")return
     if(kind=="live-quality"){LiveQualityDialog {command("dialog-close")};return}
     if(kind=="playback-order"){PlaybackOrderDialog();return}
@@ -508,33 +509,33 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
     val menuId=model.target;val menuKey=model.targetQueueKey
     val song=model.queue.find {it.id==model.target} ?: model.songs.find {it.id==model.target} ?: model.current?.takeIf {it.id==model.target} ?: model.sections.flatMap {it.songs}.find {it.id==model.target} ?: model.creatorSongs.find {it.id==model.target} ?: model.collectionSongs.find {it.id==model.target}
     if(kind=="song-menu"){SongActionsSheet(song,menuId,menuKey);return}
-    val title=when(kind){"theme"->"Appearance";"song-menu"->song?.title ?: "Track actions";"metadata"->"Edit track details";"lyrics-edit"->"Edit synchronized lyrics";"playlist-create","playlist-create-add"->"Create playlist";"playlist-rename"->"Rename playlist";"playlist-add"->"Add to playlist";"playlist-menu"->"Playlist management";"remove"->"Remove track";"backup-confirm"->"Restore backup";"search-preference"->"Search preferences";"about"->"About Tinglan";else->"Lyrics source"}
+    val title=when(kind){"theme"->tr("Appearance");"song-menu"->song?.title ?: tr("Track actions");"metadata"->tr("Edit track details");"lyrics-edit"->tr("Edit synchronized lyrics");"playlist-create","playlist-create-add"->tr("Create playlist");"playlist-rename"->tr("Rename playlist");"playlist-add"->tr("Add to playlist");"playlist-menu"->tr("Playlist management");"remove"->tr("Remove track");"backup-confirm"->tr("Restore backup");"search-preference"->tr("Search preferences");"about"->tr("About Tinglan");else->tr("Lyrics source")}
     TinglanAlertDialog(onDismissRequest={command("dialog-close")},shape=RoundedCornerShape(26.dp),title={Text(title,maxLines=2,overflow=TextOverflow.Ellipsis)},text={
         Column(Modifier.widthIn(max=480.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             when(kind) {
-                "theme" -> listOf("system" to "Follow system","light" to "Light","dark" to "Dark").forEach { (id,label) -> DialogOption(label,"album") {command("setting",payload("key" to "theme","value" to id));command("dialog-close")} }
-                "search-preference" -> listOf("qq","bili","netease").forEach {id -> DialogOption("${platformName(id)} first",id) {command("setting",payload("key" to "searchPreference","value" to id));command("dialog-close")}}
-                "playlist-menu" -> {DialogOption("Edit name, description, and background","playlist") {command("playlist-edit",model.target)};DialogOption("Delete playlist","delete") {command("playlist-delete-open")}}
-                "playlist-add" -> {DialogOption("Create playlist and add","add") {command("playlist-create-add-open")};model.playlists.forEach {p ->DialogOption(p.name,"playlist") {command("playlist-add",p.id)}}}
-                "playlist-create","playlist-create-add","playlist-rename" -> TextField(text,{text=it},singleLine=true,label={Text("Playlist name")},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp))
-                "metadata" -> {Text("Enter title, artist, and album in that order, one per line.",color=MaterialTheme.colorScheme.onSurfaceVariant);TextField(text,{text=it},modifier=Modifier.fillMaxWidth().heightIn(min=140.dp),shape=RoundedCornerShape(14.dp))}
-                "lyrics-edit" -> {Text("Use LRC timestamps. Your edits are saved locally.",color=MaterialTheme.colorScheme.onSurfaceVariant);TextField(text,{text=it},modifier=Modifier.fillMaxWidth().heightIn(min=180.dp,max=340.dp),shape=RoundedCornerShape(14.dp));Row {TextButton(onClick={command("copy",text)}) {Text("Copy")};TextButton(onClick={command("lyrics-export",text)}) {Text("Export LRC")};TextButton(onClick={command("lyrics-import")}) {Text("Import LRC")}}}
-                "remove" -> Text("Remove this track from the browser library. The original file on your device is kept.")
+                "theme" -> listOf("system" to tr("Follow system"),"light" to tr("Light"),"dark" to tr("Dark")).forEach { (id,label) -> DialogOption(label,"album") {command("setting",payload("key" to "theme","value" to id));command("dialog-close")} }
+                "search-preference" -> listOf("qq","bili","netease").forEach {id -> DialogOption(tr("{0} first", platformName(id)),id) {command("setting",payload("key" to "searchPreference","value" to id));command("dialog-close")}}
+                "playlist-menu" -> {DialogOption(tr("Edit name, description, and background"),"playlist") {command("playlist-edit",model.target)};DialogOption(tr("Delete playlist"),"delete") {command("playlist-delete-open")}}
+                "playlist-add" -> {DialogOption(tr("Create playlist and add"),"add") {command("playlist-create-add-open")};model.playlists.forEach {p ->DialogOption(p.name,"playlist") {command("playlist-add",p.id)}}}
+                "playlist-create","playlist-create-add","playlist-rename" -> TextField(text,{text=it},singleLine=true,label={Text(tr("Playlist name"))},modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(14.dp))
+                "metadata" -> {Text(tr("Enter title, artist, and album in that order, one per line."),color=MaterialTheme.colorScheme.onSurfaceVariant);TextField(text,{text=it},modifier=Modifier.fillMaxWidth().heightIn(min=140.dp),shape=RoundedCornerShape(14.dp))}
+                "lyrics-edit" -> {Text(tr("Use LRC timestamps. Your edits are saved locally."),color=MaterialTheme.colorScheme.onSurfaceVariant);TextField(text,{text=it},modifier=Modifier.fillMaxWidth().heightIn(min=180.dp,max=340.dp),shape=RoundedCornerShape(14.dp));Row {TextButton(onClick={command("copy",text)}) {Text(tr("Copy"))};TextButton(onClick={command("lyrics-export",text)}) {Text(tr("Export LRC"))};TextButton(onClick={command("lyrics-import")}) {Text(tr("Import LRC"))}}}
+                "remove" -> Text(tr("Remove this track from the browser library. The original file on your device is kept."))
                 "backup-confirm" -> Text(model.backupText)
 
 
-                "about" -> {Text("Tinglan brings your platforms and local music together.\n\nWeb 0.31.1\n The interface is rendered by Compose / Skia .\n\nGPL-3.0\n Includes Kotlin, Compose Multiplatform, Skia, Noto Sans SC and music-metadata. Complete licenses are distributed with the app.");TextButton(onClick={command("licenses")}) {Text("Open-source licenses")}}
-                else -> {DialogOption("Platform lyrics / Subtitles","music") {command("lyrics-source","platform")};DialogOption("Kugou lyrics","music") {command("lyrics-source","kugou")};DialogOption("Edited local lyrics","queue") {command("lyrics-edit")}}
+                "about" -> {Text(tr("Tinglan brings your platforms and local music together.\n\nWeb 0.31.2\n The interface is rendered by Compose / Skia .\n\nGPL-3.0\n Includes Kotlin, Compose Multiplatform, Skia, Noto Sans SC and music-metadata. Complete licenses are distributed with the app."));TextButton(onClick={command("licenses")}) {Text(tr("Open-source licenses"))}}
+                else -> {DialogOption(tr("Platform lyrics / Subtitles"),"music") {command("lyrics-source","platform")};DialogOption(tr("Kugou lyrics"),"music") {command("lyrics-source","kugou")};DialogOption(tr("Edited local lyrics"),"queue") {command("lyrics-edit")}}
             }
         }
     },confirmButton={
         when(kind) {
-            "playlist-create","playlist-create-add","playlist-rename","metadata","lyrics-edit" -> TextButton(onClick={command("dialog-save",text)},enabled=text.isNotBlank() && !model.busy && !model.accountChanging) {Text("Save")}
-            "remove" -> TextButton(onClick={command("remove",model.target)}) {Text("Remove")}
-            "backup-confirm" -> TextButton(onClick={command("backup-restore")}) {Text("Confirm restore")}
-            else -> TextButton(onClick={command("dialog-close")}) {Text("Done")}
+            "playlist-create","playlist-create-add","playlist-rename","metadata","lyrics-edit" -> TextButton(onClick={command("dialog-save",text)},enabled=text.isNotBlank() && !model.busy && !model.accountChanging) {Text(tr("Save"))}
+            "remove" -> TextButton(onClick={command("remove",model.target)}) {Text(tr("Remove"))}
+            "backup-confirm" -> TextButton(onClick={command("backup-restore")}) {Text(tr("Confirm restore"))}
+            else -> TextButton(onClick={command("dialog-close")}) {Text(tr("Done"))}
         }
-    },dismissButton={TextButton(onClick={command("dialog-close")}) {Text("Cancel")}})
+    },dismissButton={TextButton(onClick={command("dialog-close")}) {Text(tr("Cancel"))}})
 }
 @Composable private fun DialogOption(label:String,icon:String,click:()->Unit) {
     Surface(onClick=click,shape=RoundedCornerShape(14.dp),color=Color.Transparent) {Row(Modifier.fillMaxWidth().heightIn(min=52.dp).padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(14.dp)) {Glyph(icon,color=if(icon in listOf("qq","bili","netease"))sourceColor(icon)else MaterialTheme.colorScheme.primary);Text(label)}}

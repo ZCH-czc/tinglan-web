@@ -28,8 +28,8 @@ internal fun readRecognition(value:JsonElement?):RecognitionInfo {
         Row(Modifier.fillMaxWidth().padding(12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             if(song.cover)Cover(song,40.dp)else Glyph(if(song.source=="local")"music" else song.source,Modifier.size(28.dp),MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(4.dp)) {Text(song.title,fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis);Text(song.artist,style=MaterialTheme.typography.bodySmall,maxLines=1,overflow=TextOverflow.Ellipsis);if(date.isNotBlank())Text(date,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}
-            Action("play","Play ${song.title}",enabled=enabled) {command("recognition-play",song.id)}
-            Action("search","Search platforms ${song.title}",enabled=enabled) {command("recognition-search",song.id)}
+            Action("play",tr("Play {0}", song.title),enabled=enabled) {command("recognition-play",song.id)}
+            Action("search",tr("Search platforms {0}", song.title),enabled=enabled) {command("recognition-search",song.id)}
         }
     }
 }
@@ -37,9 +37,9 @@ internal fun readRecognition(value:JsonElement?):RecognitionInfo {
     val info=model.recognition
     var historyQuery by remember(info.result?.id,info.historyCount) {mutableStateOf(TextFieldValue(info.query))}
     if(model.dialog=="recognition-clear") {
-        TinglanAlertDialog(onDismissRequest={command("recognition-open")},title={Text("Clear recognition history?")},text={Text("Remove recognition history from this browser. Library tracks and exported backups are kept.")},confirmButton={TextButton(onClick={command("recognition-clear-confirm")}) {Text("Clear",color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton(onClick={command("recognition-open")}) {Text("Cancel")}});return
+        TinglanAlertDialog(onDismissRequest={command("recognition-open")},title={Text(tr("Clear recognition history?"))},text={Text(tr("Remove recognition history from this browser. Library tracks and exported backups are kept."))},confirmButton={TextButton(onClick={command("recognition-clear-confirm")}) {Text(tr("Clear"),color=MaterialTheme.colorScheme.error)}},dismissButton={TextButton(onClick={command("recognition-open")}) {Text(tr("Cancel"))}});return
     }
-    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text("Identify music")},confirmButton={TextButton(onClick={command("dialog-close")}) {Text(if(info.busy)"Cancel and close" else "Done")}},text={
+    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text(tr("Identify music"))},confirmButton={TextButton(onClick={command("dialog-close")}) {Text(if(info.busy)tr("Cancel and close") else tr("Done"))}},text={
         Column(Modifier.widthIn(max=520.dp).fillMaxWidth().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)) {
             Column(Modifier.fillMaxWidth().padding(vertical=8.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.size(94.dp),contentAlignment=Alignment.Center) {
@@ -47,27 +47,27 @@ internal fun readRecognition(value:JsonElement?):RecognitionInfo {
                     else if(info.busy)CircularProgressIndicator(Modifier.fillMaxSize(),strokeWidth=3.dp)
                     Glyph(if(info.phase=="result")"check" else "recognition",Modifier.size(44.dp),MaterialTheme.colorScheme.primary)
                 }
-                Text(when(info.phase){"permission"->"Allow microphone access";"listening"->"Listening · ${(info.progress*6).toInt().coerceIn(0,6)} / 6 s";"fingerprinting"->"Computing audio fingerprint";"local-matching"->"Matching local music";"matching"->"Matching online music";"result"->if(info.localResult)"Found a local match" else "Found your song";"no-match"->"No match found";"error"->"Recognition incomplete";else->"Discover music around you"},style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
-                if(info.phase=="no-match")Text("Try a clear vocal or chorus, or choose an audio file.",style=MaterialTheme.typography.bodySmall)
+                Text(when(info.phase){"permission"->tr("Allow microphone access");"listening"->tr("Listening · {0} / 6 s", (info.progress*6).toInt().coerceIn(0,6));"fingerprinting"->tr("Computing audio fingerprint");"local-matching"->tr("Matching local music");"matching"->tr("Matching online music");"result"->if(info.localResult)tr("Found a local match") else tr("Found your song");"no-match"->tr("No match found");"error"->tr("Recognition incomplete");else->tr("Discover music around you")},style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
+                if(info.phase=="no-match")Text(tr("Try a clear vocal or chorus, or choose an audio file."),style=MaterialTheme.typography.bodySmall)
             }
-            Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)){listOf("auto" to "Local first","offline" to "Local only","online" to "Online only").forEach {(id,label)->FilterChip(selected=info.mode==id,onClick={command("recognition-mode",id)},enabled=!info.busy,label={Text(label)})}}
-            Text(when(info.mode){"offline"->"Use this browser's fingerprints only. No online recognition request.";"online"->"Send an audio fingerprint to NetEase for matching. Original audio is not uploaded.";else->"Match local fingerprints first, then send a fingerprint to NetEase if needed. Original audio is not uploaded."}+"Record six seconds. Tinglan playback pauses during recognition.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-            OutlinedButton(onClick={command("local-index-open")},enabled=!info.busy,modifier=Modifier.fillMaxWidth()) {Text("Local fingerprint library · ${model.localIndex.indexed} tracks")}
-            if(info.mode=="offline" && model.localIndex.indexed==0)Text("Build fingerprints for local or cached tracks first.",style=MaterialTheme.typography.bodySmall)
-            if(info.error.isNotBlank())Text(info.error,color=MaterialTheme.colorScheme.error,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
-            if(info.notice.isNotBlank())Text(info.notice,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.primary)
-            if(info.busy)OutlinedButton(onClick={command("recognition-cancel")},modifier=Modifier.fillMaxWidth()) {Text("Cancel recognition")}
+            Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)){listOf("auto" to tr("Local first"),"offline" to tr("Local only"),"online" to tr("Online only")).forEach {(id,label)->FilterChip(selected=info.mode==id,onClick={command("recognition-mode",id)},enabled=!info.busy,label={Text(label)})}}
+            Text(when(info.mode){"offline"->tr("Use this browser's fingerprints only. No online recognition request.");"online"->tr("Send an audio fingerprint to NetEase for matching. Original audio is not uploaded.");else->tr("Match local fingerprints first, then send a fingerprint to NetEase if needed. Original audio is not uploaded.")}+tr("Record six seconds. Tinglan playback pauses during recognition."),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            OutlinedButton(onClick={command("local-index-open")},enabled=!info.busy,modifier=Modifier.fillMaxWidth()) {Text(tr("Local fingerprint library · {0} tracks", model.localIndex.indexed))}
+            if(info.mode=="offline" && model.localIndex.indexed==0)Text(tr("Build fingerprints for local or cached tracks first."),style=MaterialTheme.typography.bodySmall)
+            if(info.error.isNotBlank())Text(trMessage(info.error),color=MaterialTheme.colorScheme.error,modifier=Modifier.semantics {liveRegion=LiveRegionMode.Polite})
+            if(info.notice.isNotBlank())Text(trMessage(info.notice),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.primary)
+            if(info.busy)OutlinedButton(onClick={command("recognition-cancel")},modifier=Modifier.fillMaxWidth()) {Text(tr("Cancel recognition"))}
             else Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                Button(onClick={command("recognition-start")},enabled=info.mode!="offline" || model.localIndex.indexed>0,modifier=Modifier.weight(1f)) {Text("Start listening")}
-                OutlinedButton(onClick={command("recognition-file")},enabled=info.mode!="offline" || model.localIndex.indexed>0,modifier=Modifier.weight(1f)) {Text("Choose audio")}
+                Button(onClick={command("recognition-start")},enabled=info.mode!="offline" || model.localIndex.indexed>0,modifier=Modifier.weight(1f)) {Text(tr("Start listening"))}
+                OutlinedButton(onClick={command("recognition-file")},enabled=info.mode!="offline" || model.localIndex.indexed>0,modifier=Modifier.weight(1f)) {Text(tr("Choose audio"))}
             }
             info.result?.let {RecognitionSong(it,enabled=!info.busy)}
             if(info.historyCount>0) {
-                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text("Recognition history",fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f));TextButton(onClick={command("recognition-clear")},enabled=!info.busy) {Text("Clear history")}}
-                OutlinedTextField(value=historyQuery,onValueChange={historyQuery=it;command("recognition-query",it.text)},singleLine=true,placeholder={Text("Search recognized tracks or artists")},modifier=Modifier.fillMaxWidth())
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {Text(tr("Recognition history"),fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f));TextButton(onClick={command("recognition-clear")},enabled=!info.busy) {Text(tr("Clear history"))}}
+                OutlinedTextField(value=historyQuery,onValueChange={historyQuery=it;command("recognition-query",it.text)},singleLine=true,placeholder={Text(tr("Search recognized tracks or artists"))},modifier=Modifier.fillMaxWidth())
                 info.history.forEach {RecognitionSong(it.song,it.date,!info.busy)}
-                if(info.history.isEmpty())Text("No matching recognition history",style=MaterialTheme.typography.bodySmall)
-                if(info.pages>1)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {TextButton(onClick={command("recognition-page",(info.page-1).toString())},enabled=info.page>0) {Text("Previous")};Text("${info.page+1} / ${info.pages}",style=MaterialTheme.typography.labelMedium);TextButton(onClick={command("recognition-page",(info.page+1).toString())},enabled=info.page+1<info.pages) {Text("Next")}}
+                if(info.history.isEmpty())Text(tr("No matching recognition history"),style=MaterialTheme.typography.bodySmall)
+                if(info.pages>1)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {TextButton(onClick={command("recognition-page",(info.page-1).toString())},enabled=info.page>0) {Text(tr("Previous"))};Text("${info.page+1} / ${info.pages}",style=MaterialTheme.typography.labelMedium);TextButton(onClick={command("recognition-page",(info.page+1).toString())},enabled=info.page+1<info.pages) {Text(tr("Next"))}}
             }
         }
     })

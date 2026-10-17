@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Small retained pages with request ownership; page switches never refresh accepted results. */
 export class CreatorPages {
   constructor(load,changed) {Object.assign(this,{load,changed});this.cache=new Map();this.revision=0;this.current=null;}
@@ -10,7 +11,7 @@ export class CreatorPages {
       const value=await this.load(source,id,page,{force,profileOnly,signal:this.abort.signal});if(revision!==this.revision)return;
       this.cache.set(key,value);while(this.cache.size>12)this.cache.delete(this.cache.keys().next().value);
       this.current={...value,source,id,page,loading:false};this.changed(this.current);
-    }catch(error){if(revision!==this.revision || error.name==='AbortError')return;this.current={...this.current,loading:false,warning:error.message || 'Artist page temporarily unavailable'};this.changed(this.current);}
+    }catch(error){if(revision!==this.revision || error.name==='AbortError')return;this.current={...this.current,loading:false,warning:error.message || tr("Artist page temporarily unavailable")};this.changed(this.current);}
   }
   retainedSongs(){return [...this.cache.values()].flatMap(value=>value.songs || []);}
   cancel(){++this.revision;this.abort?.abort();}

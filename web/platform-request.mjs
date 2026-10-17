@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {hostFetch,hostSetTimeout,hostClearTimeout} from './host-api.mjs';
 import {retryAfterSeconds} from './playback-recovery.mjs';
 
@@ -11,12 +12,12 @@ function failure(message,code,response,name='Error') {
 function connectionFailure(method,timedOut=false) {
   const readOnly=['GET','HEAD'].includes(method);
   const message=readOnly
-    ?(timedOut?'Music service timed out. Tap Retry later.':'Local companion connection lost. Confirm Tinglan’s companion is running, then retry.')
-    :(timedOut?'Connection timed out; the action is unconfirmed. Refresh status before submitting again.':'Connection lost; the action is unconfirmed. Refresh status before submitting again.');
+    ?(timedOut?tr("Music service timed out. Tap Retry later."):tr("Local companion connection lost. Confirm Tinglan’s companion is running, then retry."))
+    :(timedOut?tr("Connection timed out; the action is unconfirmed. Refresh status before submitting again."):tr("Connection lost; the action is unconfirmed. Refresh status before submitting again."));
   return failure(message,'network',null,timedOut?'TimeoutError':'Error');
 }
 function invalidReply(response) {
-  return failure('Unrecognized companion response. Start the matching Tinglan companion version.','invalid-response',response);
+  return failure(tr("Unrecognized companion response. Start the matching Tinglan companion version."),'invalid-response',response);
 }
 
 /** One deadline owns headers and body; cancellation also settles adapters that ignore AbortSignal.
@@ -50,7 +51,7 @@ export async function requestPlatformJson(path,{
     let text;
     try {
       const advertised=Number(response.headers.get('content-length'));
-      if(advertised>PLATFORM_JSON_LIMIT)throw failure('Companion response is too large. Narrow the request and retry.','invalid-response',response);
+      if(advertised>PLATFORM_JSON_LIMIT)throw failure(tr("Companion response is too large. Narrow the request and retry."),'invalid-response',response);
       reader=response.body?.getReader();
       const parts=[],decoder=new TextDecoder('utf-8',{fatal:true});let size=0;
       if(reader)while(true){
@@ -58,7 +59,7 @@ export async function requestPlatformJson(path,{
         try {chunk=await reader.read();}catch{controller.signal.throwIfAborted();throw connectionFailure(method);}
         controller.signal.throwIfAborted();if(chunk.done)break;
         size+=chunk.value.byteLength;
-        if(size>PLATFORM_JSON_LIMIT)throw failure('Companion response is too large. Narrow the request and retry.','invalid-response',response);
+        if(size>PLATFORM_JSON_LIMIT)throw failure(tr("Companion response is too large. Narrow the request and retry."),'invalid-response',response);
         try {parts.push(decoder.decode(chunk.value,{stream:true}));}catch{throw invalidReply(response);}
       }
       try {parts.push(decoder.decode());}catch{throw invalidReply(response);}
@@ -68,7 +69,7 @@ export async function requestPlatformJson(path,{
     controller.signal.throwIfAborted();
     let value;try{value=JSON.parse(text);}catch{throw invalidReply(response);}
     if(!response.ok){
-      const message=typeof value?.error?.message==='string'?value.error.message.slice(0,600):'Platform connection unavailable. Retry later.';
+      const message=typeof value?.error?.message==='string'?value.error.message.slice(0,600):tr("Platform connection unavailable. Retry later.");
       throw failure(message,typeof value?.error?.code==='string'?value.error.code:'unavailable',response);
     }
     if(!value || typeof value!=='object')throw invalidReply(response);

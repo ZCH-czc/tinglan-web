@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {LISTENING_LIMITS,normalizeListening} from './listening-data.mjs';
 
 /** Actual advancing media time is bounded by monotonic elapsed time, never by play intent. */
@@ -5,7 +6,7 @@ export class ListeningRecorder {
   constructor(save,{monotonic=()=>performance.now(),wall=()=>Date.now(),changed=()=>{},error=()=>{},uuid=()=>crypto.randomUUID()}={}) {Object.assign(this,{save,monotonic,wall,changed,error,uuid});this.enabled=true;this.pending=new Map();this.failed=new Map();this.generation=0;this.lastSave=0;}
   begin(track) {
     this.finish();if(!this.enabled || !track?.id)return;
-    this.track=track;this.current={id:this.uuid(),songId:track.id,title:String(track.title || 'Untitled track').slice(0,2000),artist:String(track.artist || 'Unknown artist').slice(0,2000),album:String(track.album || '').slice(0,2000),source:track.source || 'local',creatorId:String(track.creatorId || '').slice(0,40),creatorName:String(track.creatorName || '').slice(0,2000),startedAt:Math.floor(this.wall()),segments:[],totalMs:0};this.anchor=null;
+    this.track=track;this.current={id:this.uuid(),songId:track.id,title:String(track.title || tr("Untitled track")).slice(0,2000),artist:String(track.artist || tr("Unknown artist")).slice(0,2000),album:String(track.album || '').slice(0,2000),source:track.source || 'local',creatorId:String(track.creatorId || '').slice(0,40),creatorName:String(track.creatorName || '').slice(0,2000),startedAt:Math.floor(this.wall()),segments:[],totalMs:0};this.anchor=null;
   }
   observe(sample,{discontinuity=false}={}) {
     if(!this.enabled || !this.current || sample.id!==this.current.songId)return;
@@ -24,7 +25,7 @@ export class ListeningRecorder {
   queue() {for(const [id,entry] of this.failed)this.pending.set(id,entry);this.failed.clear();if(this.current && this.current.totalMs>=LISTENING_LIMITS.threshold)this.pending.set(this.current.id,{row:normalizeListening(this.current),generation:this.generation});if(this.pending.size)this.drain();}
   async drain() {if(this.saving)return this.saving;this.saving=(async()=>{while(this.pending.size){const [id,entry]=this.pending.entries().next().value;this.pending.delete(id);if(entry.generation!==this.generation)continue;try{const accepted=await this.save(entry.row);if(accepted!==false && entry.generation===this.generation)this.changed();}catch(error){if(entry.generation===this.generation){this.failed.set(id,entry);while(this.failed.size>32)this.failed.delete(this.failed.keys().next().value);this.error(error);}}}})().finally(()=>{this.saving=null;if(this.pending.size)this.drain();});return this.saving;}
   finish() {this.queue();this.current=null;this.anchor=null;}
-  async flush() {this.queue();while(this.saving || this.pending.size)await this.drain();if(this.failed.size)throw new Error('Listening statistics not saved. Restore local storage and retry');}
+  async flush() {this.queue();while(this.saving || this.pending.size)await this.drain();if(this.failed.size)throw new Error(tr("Listening statistics not saved. Restore local storage and retry"));}
   reset() {++this.generation;this.pending.clear();this.failed.clear();this.current=null;this.anchor=null;}
   setEnabled(value,track) {this.finish();this.enabled=value===true;if(this.enabled && track)this.begin(track);}
 }

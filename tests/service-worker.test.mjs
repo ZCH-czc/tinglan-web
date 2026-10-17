@@ -13,7 +13,7 @@ async function fixture(extraAssets=[],origin='https://tinglan.test/') {
   const self={location:{href:origin+'service-worker.mjs'},addEventListener:(name,fn)=>handlers.set(name,fn),clients:{claim:async()=>{}},skipWaiting:()=>{}};
   const fetch=async request=>{fetched.push(key(request));if(network.offline)throw new Error('offline');return new Response(key(request).endsWith('index.html')?'old document':'old module');};
   const source=(await readFile(new URL('../web/service-worker.mjs',import.meta.url),'utf8')).replace('__TINGLAN_BUILD_ID__','build-test').replace('__TINGLAN_ASSET_MANIFEST__',JSON.stringify(['index.html','ui.wasm','canvas-app.mjs',...extraAssets]));
-  runInNewContext(source.replace(/^import .*\n/,''),{self,caches,fetch,URL,Response,Promise,Set});
+  runInNewContext(source.replace(/^import[^\r\n]*\r?\n/gm,''),{self,caches,fetch,URL,Response,Promise,Set});
   async function lifecycle(name){let task;handlers.get(name)({waitUntil:value=>{task=value;}});await task;}
   async function request(path,{method='GET',mode='cors'}={}){let task;handlers.get('fetch')({request:{url:new URL(path,origin).href,method,mode},respondWith:value=>{task=value;}});return task;}
   return {lifecycle,request,network,fetched,cacheData};

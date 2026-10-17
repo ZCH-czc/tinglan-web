@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Library presentation and edits are independent of the player clock and platform transport. */
 export const LIBRARY_TABS=['overview','playlists','platform','activity','songs','artists','albums','notes'];
 export const LIBRARY_PAGE_SIZE=100;
@@ -26,11 +27,11 @@ export function libraryView(records,playlists,preferences,request={}) {
   let rows=selected?selected.trackIds.map(id=>records.get(id)).filter(Boolean):all;
   if(!selected){if(tab==='favorites')rows=rows.filter(s=>s.favorite);if(tab==='cached')rows=rows.filter(s=>s.cached);if(tab==='local')rows=rows.filter(s=>s.source==='local');if(tab==='recent')rows=prefs.recentTrackIds.map(id=>records.get(id)).filter(Boolean);}
   if(prefs.librarySource!=='all')rows=rows.filter(s=>s.source===prefs.librarySource);
-  if(request.group && ['artists','albums'].includes(tab))rows=rows.filter(s=>(tab==='artists'?(s.artist || 'Unknown artist'):(s.album || 'Unknown album'))===request.group);
+  if(request.group && ['artists','albums'].includes(tab))rows=rows.filter(s=>(tab==='artists'?(s.artist || tr("Unknown artist")):(s.album || tr("Unknown album")))===request.group);
   rows=rows.filter(match);if(tab!=='recent')rows=orderedSongs(rows,selected&&prefs.sort==='recent'?'custom':prefs.sort,prefs.sortDescending);
   const groups=[];
   if(!request.group && !selected && ['artists','albums'].includes(tab)) {
-    const found=new Map();for(const row of rows){const name=(tab==='artists'?row.artist:row.album) || (tab==='artists'?'Unknown artist':'Unknown album');let group=found.get(name);if(!group){group={name,count:0,coverId:row.id,duration:0};found.set(name,group);}++group.count;group.duration+=row.durationMs || 0;}
+    const found=new Map();for(const row of rows){const name=(tab==='artists'?row.artist:row.album) || (tab==='artists'?tr("Unknown artist"):tr("Unknown album"));let group=found.get(name);if(!group){group={name,count:0,coverId:row.id,duration:0};found.set(name,group);}++group.count;group.duration+=row.durationMs || 0;}
     groups.push(...found.values());groups.sort((a,b)=>collator.compare(a.name,b.name)*(prefs.sortDescending?-1:1));
   }
   const tags=[...new Set(playlists.flatMap(p=>playlistDetails(p).tags))].sort(collator.compare);
@@ -41,8 +42,8 @@ export function libraryView(records,playlists,preferences,request={}) {
 /** One serial writer commits storage first. A failed edit never changes the visible catalogue. */
 export class PlaylistEditor {
   constructor({read,write,remove,accepted}){Object.assign(this,{read,write,remove,accepted});this.pending=Promise.resolve();}
-  run(id,operation,write=this.write){const next=this.pending.catch(()=>{}).then(async()=>{const old=await this.read(id);const value=operation(old);if(value===null){if(!old)throw new Error('Playlist no longer exists');await this.remove(id);this.accepted(id,null);return null;}if(!value || value.id!==id || !validId(value.id) || !value.name?.trim() || value.name.trim().length>80 || !Array.isArray(value.trackIds) || value.trackIds.length>10000 || value.trackIds.some(id=>!validId(id)) || new Set(value.trackIds).size!==value.trackIds.length)throw new Error('Invalid playlist metadata');const normalized={...value,name:value.name.trim(),...playlistDetails(value)};if(normalized.background==='song' && !normalized.trackIds.includes(normalized.backgroundTrackId)){normalized.background='none';normalized.backgroundTrackId='';}await write(normalized);this.accepted(id,normalized);return normalized;});this.pending=next;return next;}
-  patch(id,patch){return this.run(id,old=>{if(!old)throw new Error('Playlist no longer exists');return {...old,...patch,id,trackIds:old.trackIds};});}
-  membership(id,ids,remove=false){return this.run(id,old=>{if(!old)throw new Error('Playlist no longer exists');const selected=new Set(ids);return {...old,trackIds:remove?old.trackIds.filter(id=>!selected.has(id)):[...new Set([...old.trackIds,...ids])]};});}
-  move(id,songId,destinationId){return this.run(id,old=>{if(!old || !old.trackIds.includes(songId) || !old.trackIds.includes(destinationId))throw new Error('Playlist entry changed. Reorder again');const ids=[...old.trackIds],to=ids.indexOf(destinationId);ids.splice(ids.indexOf(songId),1);ids.splice(to,0,songId);return {...old,trackIds:ids};});}
+  run(id,operation,write=this.write){const next=this.pending.catch(()=>{}).then(async()=>{const old=await this.read(id);const value=operation(old);if(value===null){if(!old)throw new Error(tr("Playlist no longer exists"));await this.remove(id);this.accepted(id,null);return null;}if(!value || value.id!==id || !validId(value.id) || !value.name?.trim() || value.name.trim().length>80 || !Array.isArray(value.trackIds) || value.trackIds.length>10000 || value.trackIds.some(id=>!validId(id)) || new Set(value.trackIds).size!==value.trackIds.length)throw new Error(tr("Invalid playlist metadata"));const normalized={...value,name:value.name.trim(),...playlistDetails(value)};if(normalized.background==='song' && !normalized.trackIds.includes(normalized.backgroundTrackId)){normalized.background='none';normalized.backgroundTrackId='';}await write(normalized);this.accepted(id,normalized);return normalized;});this.pending=next;return next;}
+  patch(id,patch){return this.run(id,old=>{if(!old)throw new Error(tr("Playlist no longer exists"));return {...old,...patch,id,trackIds:old.trackIds};});}
+  membership(id,ids,remove=false){return this.run(id,old=>{if(!old)throw new Error(tr("Playlist no longer exists"));const selected=new Set(ids);return {...old,trackIds:remove?old.trackIds.filter(id=>!selected.has(id)):[...new Set([...old.trackIds,...ids])]};});}
+  move(id,songId,destinationId){return this.run(id,old=>{if(!old || !old.trackIds.includes(songId) || !old.trackIds.includes(destinationId))throw new Error(tr("Playlist entry changed. Reorder again"));const ids=[...old.trackIds],to=ids.indexOf(destinationId);ids.splice(ids.indexOf(songId),1);ids.splice(to,0,songId);return {...old,trackIds:ids};});}
 }

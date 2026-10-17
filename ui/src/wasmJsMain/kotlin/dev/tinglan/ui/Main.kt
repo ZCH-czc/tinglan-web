@@ -18,6 +18,10 @@ actual fun artworkFor(id: String): ImageBitmap? {
 }
 actual fun command(action: String, payload: String): Unit = js("{ globalThis.tinglanDispatch?.(action, payload); }")
 
+@JsExport fun setUiLanguage(language:String,translations:String) = Snapshot.withMutableSnapshot {
+    configureTranslations(language,translations)
+}
+
 @JsExport fun updateUi(raw: String) = Snapshot.withMutableSnapshot {
     pageModelOrder.remove(model.viewKey);pageModelOrder.add(model.viewKey)
     // Account/login state belongs to the current session, never the retained page snapshots.

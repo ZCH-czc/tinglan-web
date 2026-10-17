@@ -51,31 +51,31 @@ import kotlin.time.TimeSource
             AnimatedVisibility(shown || loading || failure.isNotEmpty(),enter=fadeIn(tween(motionDuration(120))),exit=fadeOut(tween(motionDuration(180)))) {
                 Box(Modifier.fillMaxSize()) {
                     Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha=.65f),Color.Transparent))).padding(horizontal=8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically) {
-                        VideoAction("back",if(model.video.fullscreen)"Exit video fullscreen"else "Back to audio player") {command(if(model.video.fullscreen)"video-fullscreen"else "video-close")}
+                        VideoAction("back",if(model.video.fullscreen)tr("Exit video fullscreen")else tr("Back to audio player")) {command(if(model.video.fullscreen)"video-fullscreen"else "video-close")}
                         Text(model.current?.title.orEmpty(),Modifier.weight(1f).padding(horizontal=6.dp),maxLines=1,overflow=TextOverflow.Ellipsis,color=Color.White,fontWeight=FontWeight.SemiBold,style=MaterialTheme.typography.titleSmall)
-                        if(!compact)VideoAction("comment","View video comments") {command("comments-open",model.current?.id.orEmpty())}
-                        VideoAction("more","More video actions") {interact();menu="actions"}
+                        if(!compact)VideoAction("comment",tr("View video comments")) {command("comments-open",model.current?.id.orEmpty())}
+                        VideoAction("more",tr("More video actions")) {interact();menu="actions"}
                     }
                     Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent,Color.Black.copy(alpha=.72f)))).padding(horizontal=12.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                         VideoSeekBar {interact()}
                         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-                            VideoAction(if(model.status=="playing" || model.status=="waiting-network")"pause"else "play",if(model.status=="playing")"Pause video"else "Play video",loading) {interact();if(model.video.status=="error")command("video-retry");command("toggle")}
+                            VideoAction(if(model.status=="playing" || model.status=="waiting-network")"pause"else "play",if(model.status=="playing")tr("Pause video")else tr("Play video"),loading) {interact();if(model.video.status=="error")command("video-retry");command("toggle")}
                             Text("${timestamp(videoClock)} / ${timestamp(model.current?.duration ?: 0)}",color=Color.White.copy(alpha=.9f),style=MaterialTheme.typography.labelMedium,modifier=Modifier.weight(1f).padding(start=6.dp),maxLines=1)
                             if(!compact) {
-                                VideoAction("danmaku",if(model.danmakuEnabled)"Hide comments overlay"else "Show comments overlay",tint=if(model.danmakuEnabled)MaterialTheme.colorScheme.primary else Color.White) {interact();command("danmaku-toggle")}
-                                VideoAction("sliders","Overlay settings") {interact();menu="danmaku"}
-                                VideoAction("playlist","Episodes & video collections") {interact();command("bili-context-open")}
+                                VideoAction("danmaku",if(model.danmakuEnabled)tr("Hide comments overlay")else tr("Show comments overlay"),tint=if(model.danmakuEnabled)MaterialTheme.colorScheme.primary else Color.White) {interact();command("danmaku-toggle")}
+                                VideoAction("sliders",tr("Overlay settings")) {interact();menu="danmaku"}
+                                VideoAction("playlist",tr("Episodes & video collections")) {interact();command("bili-context-open")}
                                 TextButton(onClick={interact();menu="speed"}) {Text("${model.video.rate}×",color=Color.White)}
-                            TextButton(onClick={interact();menu="quality"}) {Text(model.video.label.ifBlank {"Quality"},color=Color.White)}
+                            TextButton(onClick={interact();menu="quality"}) {Text(model.video.label.ifBlank {tr("Quality")},color=Color.White)}
                             }
-                            VideoAction(if(model.video.fullscreen)"fullscreen-exit"else "fullscreen",if(model.video.fullscreen)"Exit video fullscreen"else "Enter video fullscreen") {interact();command("video-fullscreen")}
+                            VideoAction(if(model.video.fullscreen)"fullscreen-exit"else "fullscreen",if(model.video.fullscreen)tr("Exit video fullscreen")else tr("Enter video fullscreen")) {interact();command("video-fullscreen")}
                         }
                         if(compact)Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) {
-                            VideoAction("danmaku",if(model.danmakuEnabled)"Hide comments overlay"else "Show comments overlay",tint=if(model.danmakuEnabled)MaterialTheme.colorScheme.primary else Color.White) {interact();command("danmaku-toggle")}
-                            VideoAction("sliders","Overlay settings") {interact();menu="danmaku"}
-                            VideoAction("playlist","Episodes & video collections") {interact();command("bili-context-open")}
+                            VideoAction("danmaku",if(model.danmakuEnabled)tr("Hide comments overlay")else tr("Show comments overlay"),tint=if(model.danmakuEnabled)MaterialTheme.colorScheme.primary else Color.White) {interact();command("danmaku-toggle")}
+                            VideoAction("sliders",tr("Overlay settings")) {interact();menu="danmaku"}
+                            VideoAction("playlist",tr("Episodes & video collections")) {interact();command("bili-context-open")}
                             TextButton(onClick={interact();menu="speed"}) {Text("${model.video.rate}×",color=Color.White)}
-                            TextButton(onClick={interact();menu="quality"}) {Text(model.video.label.ifBlank {"Quality"},color=Color.White)}
+                            TextButton(onClick={interact();menu="quality"}) {Text(model.video.label.ifBlank {tr("Quality")},color=Color.White)}
                         }
                     }
                 }
@@ -83,23 +83,23 @@ import kotlin.time.TimeSource
             if(loading && failure.isEmpty())CircularProgressIndicator(Modifier.align(Alignment.Center).size(32.dp),color=Color.White,strokeWidth=2.dp)
             if(failure.isNotEmpty())Column(Modifier.align(Alignment.Center).widthIn(max=480.dp).padding(24.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 Text(failure,color=Color.White,style=MaterialTheme.typography.bodyMedium)
-                Row {TextButton(onClick={command(if(model.status=="error")"retry-play"else "video-retry")}){Text("Reload")};TextButton(onClick={command("video-close")}){Text("Back to audio")}}
+                Row {TextButton(onClick={command(if(model.status=="error")"retry-play"else "video-retry")}){Text(tr("Reload"))};TextButton(onClick={command("video-close")}){Text(tr("Back to audio"))}}
             }
-            if(model.toast.isNotEmpty())Surface(Modifier.align(Alignment.TopCenter).padding(top=64.dp,start=18.dp,end=18.dp),shape=RoundedCornerShape(16.dp),color=Color(0xED303036)) {Text(model.toast,Modifier.padding(14.dp),color=Color.White)}
-            if(menu=="quality")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text("Video quality")},text={
+            if(model.toast.isNotEmpty())Surface(Modifier.align(Alignment.TopCenter).padding(top=64.dp,start=18.dp,end=18.dp),shape=RoundedCornerShape(16.dp),color=Color(0xED303036)) {Text(trMessage(model.toast),Modifier.padding(14.dp),color=Color.White)}
+            if(menu=="quality")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text(tr("Video quality"))},text={
                 Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text("Remembers your choice. Only qualities available to your account are used.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                    model.video.qualities.forEach {q->SelectionRow(q.label,q.id==model.video.quality,if(q.id==model.video.quality)"Playing now · ${model.video.codec}"else ""){command("video-quality",q.id.toString());menu=""}}
-                    if(model.video.qualities.isEmpty())Text("Quality options have not loaded yet")
+                    Text(tr("Remembers your choice. Only qualities available to your account are used."),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    model.video.qualities.forEach {q->SelectionRow(q.label,q.id==model.video.quality,if(q.id==model.video.quality)tr("Playing now · {0}", model.video.codec)else ""){command("video-quality",q.id.toString());menu=""}}
+                    if(model.video.qualities.isEmpty())Text(tr("Quality options have not loaded yet"))
                 }
             },confirmButton={})
-            if(menu=="speed")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text("Playback speed")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                listOf(.5f,.75f,1f,1.25f,1.5f,2f).forEach {rate->SelectionRow(if(rate==1f)"Normal speed"else "${rate}×",model.video.rate==rate){command("video-rate",rate.toString());menu=""}}
+            if(menu=="speed")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text(tr("Playback speed"))},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                listOf(.5f,.75f,1f,1.25f,1.5f,2f).forEach {rate->SelectionRow(if(rate==1f)tr("Normal speed")else "${rate}×",model.video.rate==rate){command("video-rate",rate.toString());menu=""}}
             }},confirmButton={})
-            if(menu=="actions")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text("Video actions")},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                SelectionRow("Comments",false,icon="comment"){menu="";command("comments-open",model.current?.id.orEmpty())}
-                SelectionRow("Likes & collections",false,icon="thumb"){menu="";command("bili-actions-open",model.current?.id.orEmpty())}
-                SelectionRow("Return to audio playback",false,icon="headphones"){menu="";command("video-close")}
+            if(menu=="actions")TinglanAlertDialog(onDismissRequest={menu=""},bottomSheet=true,title={Text(tr("Video actions"))},text={Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                SelectionRow(tr("Comments"),false,icon="comment"){menu="";command("comments-open",model.current?.id.orEmpty())}
+                SelectionRow(tr("Likes & collections"),false,icon="thumb"){menu="";command("bili-actions-open",model.current?.id.orEmpty())}
+                SelectionRow(tr("Return to audio playback"),false,icon="headphones"){menu="";command("video-close")}
             }},confirmButton={})
             if(menu=="danmaku")DanmakuSettings {menu=""}
             UpdateToast(Modifier.align(Alignment.TopCenter).padding(top=56.dp))
@@ -122,7 +122,7 @@ import kotlin.time.TimeSource
     var dragValue by remember(model.current?.id) {mutableStateOf<Float?>(null)}
     val ratio=(videoClock.toFloat()/total.coerceAtLeast(1)).coerceIn(0f,1f)
     Canvas(Modifier.fillMaxWidth().height(32.dp).semantics {
-        contentDescription="Video position"
+        contentDescription=tr("Video position")
         progressBarRangeInfo=ProgressBarRangeInfo(ratio,0f..1f)
         setProgress {if(total<=0)return@setProgress false;command("seek",(it.coerceIn(0f,1f)*total).toLong().toString());true}
     }.pointerInput(total) {
@@ -181,20 +181,20 @@ import kotlin.time.TimeSource
 
 @Composable fun DanmakuSettings(onDismiss:()->Unit) {
     var blocked by remember {mutableStateOf(model.danmakuBlocked)}
-    TinglanAlertDialog(onDismissRequest=onDismiss,bottomSheet=true,shape=RoundedCornerShape(26.dp),title={Text("Overlay settings")},text={
+    TinglanAlertDialog(onDismissRequest=onDismiss,bottomSheet=true,shape=RoundedCornerShape(26.dp),title={Text(tr("Overlay settings"))},text={
         Column(Modifier.widthIn(max=440.dp).heightIn(max=560.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment=Alignment.CenterVertically) {Text("Show scrolling comments",Modifier.weight(1f));Switch(checked=model.danmakuEnabled,onCheckedChange={command("danmaku-toggle")})}
-            DanmakuSlider("Text size","danmakuSize",model.danmakuSize,12f..36f,"${model.danmakuSize.toInt()}")
-            DanmakuSlider("Opacity","danmakuAlpha",model.danmakuAlpha,.1f..1f,"${(model.danmakuAlpha*100).toInt()}%")
-            DanmakuSlider("Display area","danmakuArea",model.danmakuArea,.25f..0.85f,"${(model.danmakuArea*100).toInt()}%")
-            DanmakuSlider("Speed","danmakuSpeed",model.danmakuSpeed,.5f..2f,"${(model.danmakuSpeed*10).toInt()/10f}×")
-            DanmakuSlider("On-screen limit","danmakuDensity",model.danmakuDensity.toFloat(),4f..24f,"${model.danmakuDensity} items")
-            Text("Comment refresh rate",fontWeight=FontWeight.Medium)
+            Row(verticalAlignment=Alignment.CenterVertically) {Text(tr("Show scrolling comments"),Modifier.weight(1f));Switch(checked=model.danmakuEnabled,onCheckedChange={command("danmaku-toggle")})}
+            DanmakuSlider(tr("Text size"),"danmakuSize",model.danmakuSize,12f..36f,"${model.danmakuSize.toInt()}")
+            DanmakuSlider(tr("Opacity"),"danmakuAlpha",model.danmakuAlpha,.1f..1f,"${(model.danmakuAlpha*100).toInt()}%")
+            DanmakuSlider(tr("Display area"),"danmakuArea",model.danmakuArea,.25f..0.85f,"${(model.danmakuArea*100).toInt()}%")
+            DanmakuSlider(tr("Speed"),"danmakuSpeed",model.danmakuSpeed,.5f..2f,"${(model.danmakuSpeed*10).toInt()/10f}×")
+            DanmakuSlider(tr("On-screen limit"),"danmakuDensity",model.danmakuDensity.toFloat(),4f..24f,tr("{0} items", model.danmakuDensity))
+            Text(tr("Comment refresh rate"),fontWeight=FontWeight.Medium)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {listOf(15,30,60).forEach {fps ->FilterChip(selected=model.danmakuFps==fps,onClick={setting("danmakuFps",fps.toString())},label={Text("$fps fps")})}}
-            TextField(value=blocked,onValueChange={blocked=it.take(1000)},label={Text("Blocked words, one per line")},modifier=Modifier.fillMaxWidth(),minLines=2,maxLines=4,shape=RoundedCornerShape(14.dp))
-            Text("Default 30 fps; Animations stop while paused or hidden. Settings stay in this browser and are included in backups.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            TextField(value=blocked,onValueChange={blocked=it.take(1000)},label={Text(tr("Blocked words, one per line"))},modifier=Modifier.fillMaxWidth(),minLines=2,maxLines=4,shape=RoundedCornerShape(14.dp))
+            Text(tr("Default 30 fps; Animations stop while paused or hidden. Settings stay in this browser and are included in backups."),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    },confirmButton={TextButton(onClick={setting("danmakuBlocked",blocked);onDismiss()}) {Text("Done")}})
+    },confirmButton={TextButton(onClick={setting("danmakuBlocked",blocked);onDismiss()}) {Text(tr("Done"))}})
 }
 private fun setting(key:String,value:String)=command("danmaku-setting",buildJsonObject {put("key",key);put("value",value)}.toString())
 @Composable private fun DanmakuSlider(label:String,key:String,value:Float,range:ClosedFloatingPointRange<Float>,display:String) {

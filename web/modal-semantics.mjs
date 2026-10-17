@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 const ROOTS=new Set(['tinglan-root','tinglan-video-controls','tinglan-live-controls']);
 const MODAL_ID=/^tinglan-modal-\d+$/;
 
@@ -22,7 +23,7 @@ export function markModalSemantics(root) {
   for(const node of root.querySelectorAll('[id^="tinglan-modal-"]')) {
     if(!MODAL_ID.test(node.id))continue;
     const title=root.getElementById(node.id+'-title');
-    const attributes={role:'dialog','aria-modal':'true',...(title?{'aria-labelledby':title.id}:{'aria-label':'Dialog'})};
+    const attributes={role:'dialog','aria-modal':'true',...(title?{'aria-labelledby':title.id}:{'aria-label':tr("Dialog")})};
     for(const [name,value] of Object.entries(attributes))if(node.getAttribute(name)!==value)node.setAttribute(name,value);
     node.removeAttribute(title?'aria-label':'aria-labelledby');
   }

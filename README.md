@@ -7,9 +7,11 @@ and Skia. Its interface includes a music library, playlists, synchronized lyrics
 playback queue, offline storage, and optional online platform integrations.
 
 This is the standalone Web source repository. It builds independently of the
-Android application. The application interface, repository documentation, and contribution
-instructions are in English. Music titles, lyrics, and platform content retain
-their original language.
+Android application. The interface defaults to **English**. Switch between **English** and **简体中文**
+in **Settings → Appearance & interaction → Language**. The choice takes effect
+immediately, is saved on this device, and is included in backups. Music titles,
+lyrics, comments, and other platform content retain their original language.
+Repository documentation and contribution instructions are in English.
 
 ## Two deployment modes
 

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Bilibili display titles contain promotional brackets that are not recording titles. */
 export function lyricSearchMetadata(track={}) {
   const original=String(track.title || '').normalize('NFKC').trim().slice(0,200);
@@ -30,20 +31,20 @@ export class LyricsSourceSwitcher {
     this.state={...this.state,title,artist,provider,loading:true,error:'',notice:''};this.changed();
     const owned=()=>generation===this.generation && !controller.signal.aborted && this.current()?.id===track.id;
     try {
-      if(provider==='kugou' && (!title || !artist))throw new Error('Enter a title and artist before matching Kugou lyrics');
-      if(provider==='platform' && track.source==='local')throw new Error('This local track has no platform lyrics. Match Kugou lyrics or edit local lyrics');
+      if(provider==='kugou' && (!title || !artist))throw new Error(tr("Enter a title and artist before matching Kugou lyrics"));
+      if(provider==='platform' && track.source==='local')throw new Error(tr("This local track has no platform lyrics. Match Kugou lyrics or edit local lyrics"));
       const revision=this.begin(track.id);
       const result=await this.fetch(track.id,controller.signal,provider,{...track,title,artist});
       if(!owned())return false;
-      if(!result?.text)throw new Error(provider==='kugou'?'No Kugou lyrics matched the title, artist, and duration. Existing lyrics are kept. Edit the matching details and retry':'The platform has no lyrics or subtitles. Existing lyrics are kept');
+      if(!result?.text)throw new Error(provider==='kugou'?tr("No Kugou lyrics matched the title, artist, and duration. Existing lyrics are kept. Edit the matching details and retry"):tr("The platform has no lyrics or subtitles. Existing lyrics are kept"));
       if(!await this.save(track.id,result.text,result.source,revision,owned)) {
-        if(owned())throw new Error('Lyrics changed in another action. Select the source again');return false;
+        if(owned())throw new Error(tr("Lyrics changed in another action. Select the source again"));return false;
       }
       if(!owned())return false;
-      this.state={...this.state,loading:false,error:'',notice:provider==='kugou'?'Kugou lyrics applied':'Platform lyrics applied / Subtitles'};this.changed();return true;
+      this.state={...this.state,loading:false,error:'',notice:provider==='kugou'?tr("Kugou lyrics applied"):tr("Platform lyrics applied / Subtitles")};this.changed();return true;
     }catch(error){
       if(!owned())return false;
-      this.state={...this.state,loading:false,error:error.message || 'Lyrics switch incomplete. Retry',notice:''};this.changed();return false;
+      this.state={...this.state,loading:false,error:error.message || tr("Lyrics switch incomplete. Retry"),notice:''};this.changed();return false;
     }finally{if(generation===this.generation)this.controller=null;}
   }
 }

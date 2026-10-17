@@ -42,7 +42,7 @@ test('Pages packaging sets static mode without changing local build or asset has
   const pages=JSON.parse(await read('pages/asset-manifest.json'));
   const local=JSON.parse(await read('dist/asset-manifest.json'));
   assert.notEqual(pages.build,local.build);
-  assert.equal(pages.version,'0.31.1');
+  assert.equal(pages.version,'0.31.2');
   assert.equal(pages.assets.find(x=>x.url==='ui/tinglan-web-ui.wasm').sha256,local.assets.find(x=>x.url==='ui/tinglan-web-ui.wasm').sha256);
   assert.ok(pages.assets.every(x=>!x.url.startsWith('server/') && !x.url.startsWith('shared/')));
 });

@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {BackgroundDownloadClient} from './background-download-client.mjs';
 import {CacheStore} from './cache-storage.mjs';
 import {DownloadQueue} from './download-queue.mjs';
@@ -20,14 +21,14 @@ export class MediaCache {
     try{const [scan,space]=await Promise.all([this.cache.inspect(),this.estimate().catch(()=>({}))]);const {cacheRecords,...totals}=scan;if(revision!==this.revision)return totals;
       const changes=cacheRecords.filter(row=>this.record(row.id) && JSON.stringify(cachePatch(row))!==JSON.stringify(cachePatch(this.record(row.id))));if(changes.length)this.committed(changes);
       this.pressure.observe(totals.automaticBytes,cacheBudget(this.preferences().cacheLimitMb));this.info={...this.info,...totals,usage:space.usage || 0,quota:space.quota || 0,loading:false,warning:''};this.changed();return totals;
-    }catch(error){if(revision===this.revision){this.info={...this.info,loading:false,warning:error.message || 'Storage statistics unavailable'};this.changed();}return null;}
+    }catch(error){if(revision===this.revision){this.info={...this.info,loading:false,warning:error.message || tr("Storage statistics unavailable")};this.changed();}return null;}
   }
   async assets(id,signal){
-    const row=this.record(id),result={},missing=[];if(!row)throw new Error('Track removed');
+    const row=this.record(id),result={},missing=[];if(!row)throw new Error(tr("Track removed"));
     const operations=[];
-    if(!row.lyrics && !row.lyricsEdited)operations.push((async()=>{try{const value=await this.lyrics(id,signal,row);signal.throwIfAborted();if(typeof value?.text==='string' && value.text.length>0 && value.text.length<=200000)result.lyrics=value;else missing.push('Lyrics');}catch(error){signal.throwIfAborted();missing.push('Lyrics');}})());
-    operations.push((async()=>{try{const [full,thumb]=await Promise.all([this.store.read('artwork',id),this.store.read('artwork',id+':thumb')]);signal.throwIfAborted();if(full instanceof Blob && thumb instanceof Blob)return;const blob=full instanceof Blob?full:await this.artwork(id,signal);signal.throwIfAborted();result.artwork=await this.resize(blob);signal.throwIfAborted();}catch(error){signal.throwIfAborted();missing.push('Artwork');}})());
-    await Promise.all(operations);signal.throwIfAborted();if(missing.length)result.warning=missing.join(', ')+' could not be retrieved. Audio is kept.';return result;
+    if(!row.lyrics && !row.lyricsEdited)operations.push((async()=>{try{const value=await this.lyrics(id,signal,row);signal.throwIfAborted();if(typeof value?.text==='string' && value.text.length>0 && value.text.length<=200000)result.lyrics=value;else missing.push(tr("Lyrics"));}catch(error){signal.throwIfAborted();missing.push(tr("Lyrics"));}})());
+    operations.push((async()=>{try{const [full,thumb]=await Promise.all([this.store.read('artwork',id),this.store.read('artwork',id+':thumb')]);signal.throwIfAborted();if(full instanceof Blob && thumb instanceof Blob)return;const blob=full instanceof Blob?full:await this.artwork(id,signal);signal.throwIfAborted();result.artwork=await this.resize(blob);signal.throwIfAborted();}catch(error){signal.throwIfAborted();missing.push(tr("Artwork"));}})());
+    await Promise.all(operations);signal.throwIfAborted();if(missing.length)result.warning=tr("{0} could not be retrieved. Audio is kept.",missing.join(', '));return result;
   }
   request(id,mode='download'){
     if(mode==='download' && this.background?.supported){this.clearTimer(this.autoTimer);this.queue.cancelAutomatic();return this.background.enqueue(id);}
@@ -36,7 +37,7 @@ export class MediaCache {
   async cancel(id){if(this.background?.supported)await this.background.cancel(id);const job=this.queue.jobs.get(id);if(!job)return;this.queue.cancel(id);await job.promise.catch(()=>{});}
   async cancelAll(){this.resetAutomatic();await this.background?.cancel();await this.queue.clear();}
   async clean(id=''){
-    if(this.info.cleaning)throw new Error('Clearing cache. Please wait');
+    if(this.info.cleaning)throw new Error(tr("Clearing cache. Please wait"));
     this.info={...this.info,cleaning:true,warning:''};this.changed();
     try{
       if(id)await this.cancel(id);else{const active=[...this.queue.jobs.values()].filter(row=>row.mode==='automatic');this.queue.cancelAutomatic();await Promise.all(active.map(row=>row.promise.catch(()=>{})));}
@@ -45,13 +46,13 @@ export class MediaCache {
   }
   maintain(){
     if(this.maintenance){this.maintenanceAgain=true;return this.maintenance;}
-    this.maintenance=(async()=>{do{this.maintenanceAgain=false;await this.trim();}while(this.maintenanceAgain);})().catch(error=>{this.info={...this.info,warning:'Automatic cleanup incomplete. Retry on the cache page later'};this.changed();throw error;}).finally(()=>{this.maintenance=null;});return this.maintenance;
+    this.maintenance=(async()=>{do{this.maintenanceAgain=false;await this.trim();}while(this.maintenanceAgain);})().catch(error=>{this.info={...this.info,warning:tr("Automatic cleanup incomplete. Retry on the cache page later")};this.changed();throw error;}).finally(()=>{this.maintenance=null;});return this.maintenance;
   }
   async trim(){
     const totals=await this.refresh(),limit=cacheBudget(this.preferences().cacheLimitMb);
     if(!totals || this.info.cleaning || !Number.isFinite(limit) || totals.automaticBytes<=limit)return;
     this.info={...this.info,cleaning:true};this.changed();
-    try{const result=await this.cache.clean({target:limit*.85,protectedIds:this.protectedIds,keepFavorites:this.preferences().cacheKeepFavorites});this.apply(result);await this.refresh();if(result.blocked){this.info={...this.info,warning:'Current, next, and retained favorite tracks are protected from cleanup'};this.changed();}}
+    try{const result=await this.cache.clean({target:limit*.85,protectedIds:this.protectedIds,keepFavorites:this.preferences().cacheKeepFavorites});this.apply(result);await this.refresh();if(result.blocked){this.info={...this.info,warning:tr("Current, next, and retained favorite tracks are protected from cleanup")};this.changed();}}
     finally{this.info={...this.info,cleaning:false};this.changed();}
   }
   acknowledge(token){this.pressure.acknowledge(token);this.changed();}

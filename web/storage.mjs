@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {noteIndexes,restoreNotes} from './note-storage.mjs';
 import {listeningIndexes,restoreListening} from './listening-storage.mjs';
 import {radioLibrary,mergeRadioLibraries} from './radio-data.mjs';
@@ -20,7 +21,7 @@ export class LibraryStore {
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
-      request.onblocked = () => reject(new Error('Close other Tinglan tabs and retry'));
+      request.onblocked = () => reject(new Error(tr("Close other Tinglan tabs and retry")));
     });
     this.db.onversionchange = () => this.db.close();
   }
@@ -42,8 +43,8 @@ export class LibraryStore {
     return new Promise((resolve, reject) => {
       if(signal?.aborted){reject(signal.reason || new DOMException('Cancelled','AbortError'));return;}
       const transaction = this.db.transaction(stores, 'readwrite');
-      const abort=()=>{try{transaction.abort();}catch{}},finish=(error,success=false)=>{signal?.removeEventListener('abort',abort);success?resolve():reject(error || new Error('Local save incomplete'));};
-      const failure=event=>signal?.aborted?signal.reason || new DOMException('Cancelled','AbortError'):transaction.error || event?.target?.error || new Error('Local save incomplete');
+      const abort=()=>{try{transaction.abort();}catch{}},finish=(error,success=false)=>{signal?.removeEventListener('abort',abort);success?resolve():reject(error || new Error(tr("Local save incomplete")));};
+      const failure=event=>signal?.aborted?signal.reason || new DOMException('Cancelled','AbortError'):transaction.error || event?.target?.error || new Error(tr("Local save incomplete"));
       signal?.addEventListener('abort',abort,{once:true});
       transaction.oncomplete = () => finish(undefined,true);
       transaction.onerror = event => finish(failure(event));
@@ -109,7 +110,7 @@ export class LibraryStore {
     });
   }
   importHandoff(records) {
-    if(!Array.isArray(records) || records.length<1 || records.length>40 || new Set(records.map(row=>row?.id)).size!==records.length || records.some(row=>typeof row?.id!=='string' || !row.id))return Promise.reject(new Error('Invalid handoff track list'));
+    if(!Array.isArray(records) || records.length<1 || records.length>40 || new Set(records.map(row=>row?.id)).size!==records.length || records.some(row=>typeof row?.id!=='string' || !row.id))return Promise.reject(new Error(tr("Invalid handoff track list")));
     const accepted=Array(records.length);
     return this.write(['tracks'],tx=>{
       const store=tx.objectStore('tracks');let pending=records.length+1,total=0,added=0;
@@ -119,9 +120,9 @@ export class LibraryStore {
     }).then(()=>accepted);
   }
   importPlaylist(records,playlist,{signal}={}) {
-    if(!Array.isArray(records) || records.length>10000 || !playlist?.id || !playlist.name || !Array.isArray(playlist.trackIds) || playlist.trackIds.length>10000)return Promise.reject(new Error('Invalid playlist content'));
+    if(!Array.isArray(records) || records.length>10000 || !playlist?.id || !playlist.name || !Array.isArray(playlist.trackIds) || playlist.trackIds.length>10000)return Promise.reject(new Error(tr("Invalid playlist content")));
     const unique=new Map(records.map(row=>[row?.id,row]));
-    if(unique.has(undefined) || [...unique.keys()].some(id=>typeof id!=='string' || !id || id.length>200) || playlist.trackIds.some(id=>!unique.has(id)) || new Set(playlist.trackIds).size!==playlist.trackIds.length)return Promise.reject(new Error('Invalid playlist track identifier'));
+    if(unique.has(undefined) || [...unique.keys()].some(id=>typeof id!=='string' || !id || id.length>200) || playlist.trackIds.some(id=>!unique.has(id)) || new Set(playlist.trackIds).size!==playlist.trackIds.length)return Promise.reject(new Error(tr("Invalid playlist track identifier")));
     records=[...unique.values()];const accepted=Array(records.length);let abort;
     return this.write(['tracks','playlists'],tx=>{
       signal?.throwIfAborted();abort=()=>{try{tx.abort();}catch{/* A completed transaction is already committed. */}};signal?.addEventListener('abort',abort,{once:true});
@@ -158,7 +159,7 @@ export class LibraryStore {
       const request = tx.objectStore('settings').get('preferences'); request.onsuccess = () => { output.preferences = request.result || {}; };
       const radios=tx.objectStore('settings').get('radio-library');radios.onsuccess=()=>{output.radioLibrary=radios.result || {};};
       const recognition=tx.objectStore('settings').get('recognition-history');recognition.onsuccess=()=>{output.recognitionHistory=recognition.result || [];};
-      tx.oncomplete = () => resolve(output); tx.onerror = tx.onabort = () => reject(tx.error || new Error('Unable to read the complete library'));
+      tx.oncomplete = () => resolve(output); tx.onerror = tx.onabort = () => reject(tx.error || new Error(tr("Unable to read the complete library")));
     });
   }
   mergeBackup(snapshot, preferences) {
@@ -197,14 +198,14 @@ export function trackFromFile(file, id) {
   const split = basename.indexOf(' - ');
   return {
     id, title: split > 0 ? basename.slice(split + 3) : basename,
-    artist: split > 0 ? basename.slice(0, split) : 'Local music',
+    artist: split > 0 ? basename.slice(0, split) : tr("Local music"),
     filename: file.name, size: file.size, type: file.type, durationMs: 0,
     favorite: false, lyrics: '', addedAt: Date.now(), hasArtwork: false,
   };
 }
 
 export async function resizeArtwork(file) {
-  if (file.size > 20 * 1024 * 1024) throw new Error('Artwork must be smaller than 20 MB');
+  if (file.size > 20 * 1024 * 1024) throw new Error(tr("Artwork must be smaller than 20 MB"));
   const bitmap = await createImageBitmap(file);
   try {
     const render = async limit => {
@@ -213,7 +214,7 @@ export async function resizeArtwork(file) {
       canvas.width = Math.max(1, Math.round(bitmap.width * scale));
       canvas.height = Math.max(1, Math.round(bitmap.height * scale));
       canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Unable to process artwork')), 'image/webp', .85));
+      return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error(tr("Unable to process artwork"))), 'image/webp', .85));
     };
     return [await render(640), await render(96)];
   } finally { bitmap.close(); }

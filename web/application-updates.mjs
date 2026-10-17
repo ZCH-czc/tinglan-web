@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 /** Version-consistent updates are announced, never applied without a user action. */
 export class ApplicationUpdates {
   constructor(container,{changed,reload,events=globalThis.window,document=globalThis.document,now=Date.now}) {
@@ -17,7 +18,7 @@ export class ApplicationUpdates {
   async start() {
     if(!this.container)return;
     this.onController=()=>{if(this.requested){this.requested=false;clearTimeout(this.activationTimer);this.reload();}else this.refresh();};
-    this.onMessage=event=>{if(event.data?.type==='tinglan-update-blocked' && event.source===this.waiting){this.requested=false;clearTimeout(this.activationTimer);this.refresh('Finish or cancel background downloads before updating');}};
+    this.onMessage=event=>{if(event.data?.type==='tinglan-update-blocked' && event.source===this.waiting){this.requested=false;clearTimeout(this.activationTimer);this.refresh(tr("Finish or cancel background downloads before updating"));}};
     this.onWake=()=>{if(!this.document?.hidden)this.check();};
     this.container.addEventListener('controllerchange',this.onController);this.container.addEventListener('message',this.onMessage);
     this.registration=await this.container.register('./service-worker.mjs',{type:'module',updateViaCache:'none'});
@@ -28,9 +29,9 @@ export class ApplicationUpdates {
     await this.check(true);
   }
   activate() {
-    const waiting=this.registration?.waiting;if(!waiting)throw new Error('No installable update available');if(this.requested)return;
+    const waiting=this.registration?.waiting;if(!waiting)throw new Error(tr("No installable update available"));if(this.requested)return;
     this.requested=true;this.changed(true,{prompt:this.prompt,error:'',applying:true});
-    this.activationTimer=setTimeout(()=>{this.requested=false;this.refresh('Update incomplete. Try again later');},15000);this.activationTimer.unref?.();
+    this.activationTimer=setTimeout(()=>{this.requested=false;this.refresh(tr("Update incomplete. Try again later"));},15000);this.activationTimer.unref?.();
     waiting.postMessage('activate-update');
   }
   dispose(){clearTimeout(this.activationTimer);this.events?.removeEventListener('focus',this.onWake);this.events?.removeEventListener('online',this.onWake);this.document?.removeEventListener('visibilitychange',this.onWake);this.container?.removeEventListener('controllerchange',this.onController);this.container?.removeEventListener('message',this.onMessage);this.registration?.removeEventListener('updatefound',this.watch);}

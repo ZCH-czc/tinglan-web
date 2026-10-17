@@ -5,6 +5,7 @@ data class SettingEntry(val id:String,val group:String,val title:String,val summ
 object SettingsCatalog {
     val entries=listOf(
         SettingEntry("accounts","Accounts & platforms","Accounts & platforms","Manage QQ Music, Bilibili and NetEase accounts","account","accounts-open",keywords="sign in QR code cookie QQ WeChat phone number"),
+        SettingEntry("language","Appearance & interaction","Language","English by default; switch between English and Simplified Chinese","font","dialog","language","language English Chinese 简体中文 语言"),
         SettingEntry("theme","Appearance & interaction","Theme","Choose light, dark, or system appearance","palette","dialog","theme", "color night appearance"),
         SettingEntry("font","Appearance & interaction","App font","Noto Sans SC, Noto Serif SC, LXGW WenKai, and Nunito","font","dialog","font","text font typeface"),
         SettingEntry("motion-preset","Appearance & interaction","Animation speed","Fast or relaxed page and player transitions","motion","dialog","motion-preset","curve speed animation"),
@@ -29,10 +30,10 @@ object SettingsCatalog {
         SettingEntry("about","About","About Tinglan","Version, project details, and open-source licenses","info","dialog","about","version GPL license terms")
     )
     private fun normalized(value:String)=buildString {value.take(200).forEach {c->append(when(c.code){in 0xFF01..0xFF5E->(c.code-0xFEE0).toChar();0x3000->' ';else->c})}}.lowercase()
-    fun search(query:String):List<SettingEntry> {
+    fun search(query:String,localize:(String)->String={it}):List<SettingEntry> {
         val words=normalized(query).split(Regex("\\s+")).filter {it.isNotEmpty()}.take(12)
         if(words.isEmpty())return entries
-        return entries.filter {entry->val text=normalized("${entry.title} ${entry.summary} ${entry.keywords} ${entry.group}");words.all(text::contains)}
+        return entries.filter {entry->val text=normalized("${entry.title} ${entry.summary} ${entry.keywords} ${entry.group} ${localize(entry.title)} ${localize(entry.summary)} ${localize(entry.group)} ${localize(entry.keywords)}");words.all(text::contains)}
     }
 }
 

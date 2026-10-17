@@ -1,3 +1,4 @@
+import {tr} from './i18n.mjs';
 import {NOTE_LIMITS,normalizeNote,normalizeNotes,noteFilter} from './note-data.mjs';
 import {validId} from './library-data.mjs';
 
@@ -7,7 +8,7 @@ export function noteIndexes(store) {
   if(!store.indexNames.contains('category'))store.createIndex('category','category');
 }
 const stored=value=>({...normalizeNote(value),sortTime:-value.updatedAt,revision:crypto.randomUUID()});
-const conflict=()=>Object.assign(new Error('This note was edited elsewhere. Reload before saving'),{code:'note-conflict'});
+const conflict=()=>Object.assign(new Error(tr("This note was edited elsewhere. Reload before saving")),{code:'note-conflict'});
 
 /** Schedule note restore in the caller's complete library transaction; newer local edits win. */
 export function restoreNotes(tx,values=[]) {
@@ -28,17 +29,17 @@ export function restoreNotes(tx,values=[]) {
 export class NoteStore {
   constructor(library) {this.library=library;}
   count() {return new Promise((resolve,reject)=>{const request=this.library.db.transaction('notes').objectStore('notes').count();request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
-  async read(id) {if(!validId(id))throw new Error('Invalid track note identifier');const row=await this.library.read('notes',id);if(row && row.songId!==id)throw new Error('Note and track identifiers do not match');return row?{...normalizeNote(row),revision:typeof row.revision==='string'?row.revision:''}:null;}
+  async read(id) {if(!validId(id))throw new Error(tr("Invalid track note identifier"));const row=await this.library.read('notes',id);if(row && row.songId!==id)throw new Error(tr("Note and track identifiers do not match"));return row?{...normalizeNote(row),revision:typeof row.revision==='string'?row.revision:''}:null;}
   save(value,{expectedRevision='',signal}={}) {
     const note=normalizeNote(value);let failure;
     return this.library.write(['notes'],tx=>{
       const target=tx.objectStore('notes'),request=target.get(note.songId),count=target.count();let old,total;
-      const accept=()=>{if(total===undefined || old===undefined)return;if((old?.revision || '')!==expectedRevision){failure=conflict();tx.abort();return;}if(!old && total>=NOTE_LIMITS.notes){failure=new Error('Notes have reached 10000 entry limit');tx.abort();return;}try{target.put(stored(note),note.songId);}catch(error){failure=error;tx.abort();}};
+      const accept=()=>{if(total===undefined || old===undefined)return;if((old?.revision || '')!==expectedRevision){failure=conflict();tx.abort();return;}if(!old && total>=NOTE_LIMITS.notes){failure=new Error(tr("Notes have reached 10000 entry limit"));tx.abort();return;}try{target.put(stored(note),note.songId);}catch(error){failure=error;tx.abort();}};
       request.onsuccess=()=>{old=request.result || null;accept();};count.onsuccess=()=>{total=count.result;accept();};
     },{signal}).catch(error=>{throw failure || error;});
   }
   remove(id,{expectedRevision,signal}={}) {
-    if(!validId(id))return Promise.reject(new Error('Invalid track note identifier'));let failure;
+    if(!validId(id))return Promise.reject(new Error(tr("Invalid track note identifier")));let failure;
     return this.library.write(['notes'],tx=>{const target=tx.objectStore('notes'),request=target.get(id);request.onsuccess=()=>{if(!request.result || (request.result.revision || '')!==expectedRevision){failure=conflict();tx.abort();return;}target.delete(id);};},{signal}).catch(error=>{throw failure || error;});
   }
   page(request,{signal}={}) {
@@ -50,7 +51,7 @@ export class NoteStore {
       const keys=target.index('category').openKeyCursor(null,'nextunique');keys.onsuccess=()=>{const cursor=keys.result;if(!cursor)return;categories.push(cursor.key);cursor.continue();};
       const range=filter.category?IDBKeyRange.bound([filter.category,-8640000000000000,''],[filter.category,0,'\uffff']):null;
       const index=filter.category?target.index('categoryRecent'):target.index('recent');
-      const value=item=>{const row=normalizeNote(item.value);if(row.songId!==item.primaryKey)throw new Error('Note and track identifiers do not match');return row;};
+      const value=item=>{const row=normalizeNote(item.value);if(row.songId!==item.primaryKey)throw new Error(tr("Note and track identifiers do not match"));return row;};
       if(!query) {
         const counted=index.count(range);counted.onsuccess=()=>{
           count=counted.result;if(!count)return;
@@ -69,7 +70,7 @@ export class NoteStore {
         };
       }
       tx.oncomplete=()=>{finish();const pages=Math.max(1,Math.ceil(count/NOTE_LIMITS.pageSize)),page=Math.min(filter.page,pages-1);resolve({items:!query || page===filter.page?selected:last,count,page,pages,categories});};
-      tx.onerror=tx.onabort=()=>{finish();reject(failure || (signal?.aborted?signal.reason || new DOMException('Cancelled','AbortError'):tx.error || new Error('Note read incomplete')));};
+      tx.onerror=tx.onabort=()=>{finish();reject(failure || (signal?.aborted?signal.reason || new DOMException('Cancelled','AbortError'):tx.error || new Error(tr("Note read incomplete"))));};
     });
   }
 }

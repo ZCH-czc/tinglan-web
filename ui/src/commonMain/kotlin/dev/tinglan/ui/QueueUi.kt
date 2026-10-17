@@ -26,7 +26,7 @@ import dev.tinglan.core.playingBarHeight
 import dev.tinglan.core.queueCenterDelta
 import kotlinx.coroutines.flow.first
 
-internal fun playbackOrderLabel()=if(model.shuffle)"Shuffle"else when(model.repeat){"ALL"->"Repeat all";"ONE"->"Repeat one";else->"Play in order"}
+internal fun playbackOrderLabel()=if(model.shuffle)tr("Shuffle")else when(model.repeat){"ALL"->tr("Repeat all");"ONE"->tr("Repeat one");else->tr("Play in order")}
 internal fun playbackOrderIcon()=if(model.shuffle)"shuffle"else when(model.repeat){"ALL"->"repeat";"ONE"->"repeat-one";else->"sequence"}
 private fun queueDurationLabel(ms:Long):String {
     val seconds=ms.coerceAtLeast(0)/1000
@@ -34,18 +34,18 @@ private fun queueDurationLabel(ms:Long):String {
 }
 
 @Composable internal fun PlaybackOrderButton() {
-    Action(playbackOrderIcon(),"Playback order: ${playbackOrderLabel()}",color=MaterialTheme.colorScheme.primary) {command("dialog","playback-order")}
+    Action(playbackOrderIcon(),tr("Playback order: {0}", playbackOrderLabel()),color=MaterialTheme.colorScheme.primary) {command("dialog","playback-order")}
 }
 
 @Composable internal fun PlaybackOrderDialog() {
-    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text("Playback order")},text={
+    TinglanAlertDialog(onDismissRequest={command("dialog-close")},title={Text(tr("Playback order"))},text={
         Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-            listOf(Triple("OFF","sequence","Play in order"),Triple("ALL","repeat","Repeat all"),Triple("ONE","repeat-one","Repeat one"),Triple("SHUFFLE","shuffle","Shuffle")).forEach {(id,icon,label)->
+            listOf(Triple("OFF","sequence",tr("Play in order")),Triple("ALL","repeat",tr("Repeat all")),Triple("ONE","repeat-one",tr("Repeat one")),Triple("SHUFFLE","shuffle",tr("Shuffle"))).forEach {(id,icon,label)->
                 val selected=if(id=="SHUFFLE")model.shuffle else !model.shuffle && model.repeat==id
                 SelectionRow(label,selected,icon=icon){command("playback-order",id)}
             }
         }
-    },confirmButton={TextButton(onClick={command("dialog-close")}){Text("Done")}})
+    },confirmButton={TextButton(onClick={command("dialog-close")}){Text(tr("Done"))}})
 }
 
 @Composable internal fun PlayingBars(modifier:Modifier=Modifier,playing:Boolean=true,animate:Boolean=true) {
@@ -94,30 +94,30 @@ private fun queueDurationLabel(ms:Long):String {
         }.padding(horizontal=20.dp,vertical=4.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
             Box(Modifier.align(Alignment.CenterHorizontally).padding(bottom=4.dp).size(32.dp,4.dp).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=.25f),RoundedCornerShape(2.dp)))
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-                Action("down","Close queue"){command("queue-close")}
+                Action("down",tr("Close queue")){command("queue-close")}
                 Column(Modifier.weight(1f).padding(horizontal=4.dp)) {
-                    Text("Play queue",Modifier.testTag(titleTag).semantics {heading()},style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
+                    Text(tr("Play queue"),Modifier.testTag(titleTag).semantics {heading()},style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
                     Text("${quantityLabel(model.queueTotal,"track")} · ${queueDurationLabel(model.queueDuration)}",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
-                Action(if(model.queueLocked)"lock"else "unlock",if(model.queueLocked)"Unlock queue"else "Lock queue",color=MaterialTheme.colorScheme.onSurfaceVariant){command("queue-lock")}
-                Action("delete","Clear other tracks",color=MaterialTheme.colorScheme.error,enabled=!model.queueLocked && model.queueTotal>1){command("queue-clear")}
+                Action(if(model.queueLocked)"lock"else "unlock",if(model.queueLocked)tr("Unlock queue")else tr("Lock queue"),color=MaterialTheme.colorScheme.onSurfaceVariant){command("queue-lock")}
+                Action("delete",tr("Clear other tracks"),color=MaterialTheme.colorScheme.error,enabled=!model.queueLocked && model.queueTotal>1){command("queue-clear")}
                 PlaybackOrderButton()
             }
             model.current?.let {song->
                 Row(Modifier.fillMaxWidth().padding(horizontal=4.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    Box(Modifier.clip(RoundedCornerShape(10.dp)).clickable {command("queue-locate")}.semantics {contentDescription="Show current track"}) {Cover(song,44.dp)}
+                    Box(Modifier.clip(RoundedCornerShape(10.dp)).clickable {command("queue-locate")}.semantics {contentDescription=tr("Show current track")}) {Cover(song,44.dp)}
                     Column(Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).clickable {command("queue-locate")},verticalArrangement=Arrangement.spacedBy(2.dp)) {
                         Text(song.title,style=MaterialTheme.typography.bodyLarge,fontWeight=FontWeight.Medium,maxLines=1,overflow=TextOverflow.Ellipsis)
                         Text(song.artist,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                     }
-                    Action(if(song.favorite)"liked"else "heart","Favorite current track",color=if(song.favorite)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant){command("favorite",song.id)}
-                    Action("more","Current track actions"){command("song-menu",payload("id" to song.id,"context" to "queue","queueKey" to model.queueCurrentKey))}
+                    Action(if(song.favorite)"liked"else "heart",tr("Favorite current track"),color=if(song.favorite)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant){command("favorite",song.id)}
+                    Action("more",tr("Current track actions")){command("song-menu",payload("id" to song.id,"context" to "queue","queueKey" to model.queueCurrentKey))}
                 }
             }
         }
-        LazyColumn(state=state,modifier=Modifier.weight(1f).fillMaxWidth().semantics {contentDescription="Queue list"},contentPadding=PaddingValues(start=20.dp,end=20.dp,top=4.dp,bottom=12.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
-            if(window.isEmpty())item {EmptyState("Queue is empty","Play a track or playlist to add music here.","queue")}
-            if(model.queueOffset>0)item(key="queue-before"){TextButton(onClick={command("queue-before")},modifier=Modifier.fillMaxWidth()){Text("Show earlier tracks")}}
+        LazyColumn(state=state,modifier=Modifier.weight(1f).fillMaxWidth().semantics {contentDescription=tr("Queue list")},contentPadding=PaddingValues(start=20.dp,end=20.dp,top=4.dp,bottom=12.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
+            if(window.isEmpty())item {EmptyState(tr("Queue is empty"),tr("Play a track or playlist to add music here."),"queue")}
+            if(model.queueOffset>0)item(key="queue-before"){TextButton(onClick={command("queue-before")},modifier=Modifier.fillMaxWidth()){Text(tr("Show earlier tracks"))}}
             items(window,key={it.queueKey}) {song->
                 val swipe=rememberSwipeToDismissBoxState(confirmValueChange={value->
                     if(value==SwipeToDismissBoxValue.EndToStart && !model.queueLocked){command("queue-dismiss",payload("id" to song.id,"key" to song.queueKey));false}else value==SwipeToDismissBoxValue.Settled
@@ -138,12 +138,12 @@ private fun queueDurationLabel(ms:Long):String {
                         },onDragCancel={dragKey="";dragTarget="";dragOffset=0f})
                 }
             }
-            if(model.queueOffset+window.size<model.queueTotal)item(key="queue-after"){TextButton(onClick={command("queue-after")},modifier=Modifier.fillMaxWidth()){Text("Show later tracks")}}
+            if(model.queueOffset+window.size<model.queueTotal)item(key="queue-after"){TextButton(onClick={command("queue-after")},modifier=Modifier.fillMaxWidth()){Text(tr("Show later tracks"))}}
         }
         if(model.queueUndo.isNotEmpty())Surface(color=MaterialTheme.colorScheme.inverseSurface,shape=RoundedCornerShape(16.dp),modifier=Modifier.fillMaxWidth().padding(16.dp,8.dp)) {
             Row(Modifier.padding(start=16.dp,end=6.dp),verticalAlignment=Alignment.CenterVertically) {
                 Text(model.queueUndo,Modifier.weight(1f),color=MaterialTheme.colorScheme.inverseOnSurface,style=MaterialTheme.typography.bodyMedium,maxLines=2)
-                TextButton(onClick={command("queue-undo")},enabled=!model.queueLocked){Text("Undo",color=if(model.queueLocked)MaterialTheme.colorScheme.inverseOnSurface.copy(alpha=.4f)else MaterialTheme.colorScheme.inversePrimary)}
+                TextButton(onClick={command("queue-undo")},enabled=!model.queueLocked){Text(tr("Undo"),color=if(model.queueLocked)MaterialTheme.colorScheme.inverseOnSurface.copy(alpha=.4f)else MaterialTheme.colorScheme.inversePrimary)}
             }
         }
     }
@@ -152,7 +152,7 @@ private fun queueDurationLabel(ms:Long):String {
 @Composable private fun QueueTrackRow(song:Song,dragging:Boolean,targeted:Boolean,dragOffset:Float,onDragStart:()->Unit,onDrag:(Float)->Unit,onDragEnd:()->Unit,onDragCancel:()->Unit) {
     val active=song.queueKey==model.queueCurrentKey
     FlatSelectableSurface(active,RoundedCornerShape(16.dp),if(targeted && !dragging)MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.background,
-        modifier=Modifier.fillMaxWidth().semantics {if(active)stateDescription=if(model.status=="playing")"Now playing"else "Paused"}.graphicsLayer {if(dragging){translationY=dragOffset;alpha=.8f}},
+        modifier=Modifier.fillMaxWidth().semantics {if(active)stateDescription=if(model.status=="playing")tr("Now playing")else tr("Paused")}.graphicsLayer {if(dragging){translationY=dragOffset;alpha=.8f}},
         onClick={command("queue-play",payload("id" to song.id,"key" to song.queueKey))}) {
         Row(Modifier.fillMaxWidth().padding(start=8.dp,end=0.dp,top=8.dp,bottom=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Box(Modifier.clip(RoundedCornerShape(10.dp))) {
@@ -164,12 +164,12 @@ private fun queueDurationLabel(ms:Long):String {
                 Text(song.artist+(if(song.duration>0)" · ${timestamp(song.duration)}"else ""),style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
             }
             Row {
-                Action("more","More actions: ${song.title}",color=MaterialTheme.colorScheme.onSurfaceVariant){command("song-menu",payload("id" to song.id,"context" to "queue","queueKey" to song.queueKey))}
+                Action("more",tr("More actions: {0}", song.title),color=MaterialTheme.colorScheme.onSurfaceVariant){command("song-menu",payload("id" to song.id,"context" to "queue","queueKey" to song.queueKey))}
                 if(!model.queueLocked)IconButton(onClick={},modifier=Modifier.size(44.dp).pointerInput(song.queueKey) {
                     detectDragGestures(onDragStart={onDragStart()},onDrag={change,amount->change.consume();onDrag(amount.y)},onDragEnd=onDragEnd,onDragCancel=onDragCancel)
                 }.semantics {
-                    contentDescription="Drag to reorder: ${song.title}"
-                    customActions=listOf(CustomAccessibilityAction("Move forward"){command("queue-nudge",payload("id" to song.id,"key" to song.queueKey,"delta" to "-1"));true},CustomAccessibilityAction("Move backward"){command("queue-nudge",payload("id" to song.id,"key" to song.queueKey,"delta" to "1"));true})
+                    contentDescription=tr("Drag to reorder: {0}", song.title)
+                    customActions=listOf(CustomAccessibilityAction(tr("Move forward")){command("queue-nudge",payload("id" to song.id,"key" to song.queueKey,"delta" to "-1"));true},CustomAccessibilityAction(tr("Move backward")){command("queue-nudge",payload("id" to song.id,"key" to song.queueKey,"delta" to "1"));true})
                 }){Glyph("drag",color=MaterialTheme.colorScheme.onSurfaceVariant)}
             }
         }

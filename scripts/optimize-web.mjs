@@ -19,7 +19,7 @@ entries.sort((a,b)=>a.url.localeCompare(b.url));
 const id=createHash('sha256').update(JSON.stringify(entries)).digest('hex').slice(0,24);
 const source=await readFile(resolve(stage,'service-worker.mjs'),'utf8');
 await writeFile(resolve(stage,'service-worker.mjs'),source.replace('__TINGLAN_BUILD_ID__',id).replace('__TINGLAN_ASSET_MANIFEST__',JSON.stringify(entries.map(e=>e.url))));
-await writeFile(resolve(stage,'asset-manifest.json'),JSON.stringify({version:'0.31.1',build:id,assets:entries},null,2)+'\n');
+await writeFile(resolve(stage,'asset-manifest.json'),JSON.stringify({version:'0.31.2',build:id,assets:entries},null,2)+'\n');
 let raw=0,packed=0;const pending=(await files(stage)).filter(p=>/\.(?:wasm|mjs|js|css|html|otf|ttf|txt|json|webmanifest|svg)$/.test(p));
 async function compress(){while(pending.length){const path=pending.shift(),bytes=await readFile(path);raw+=bytes.length;const brotli=await promisify(brotliCompress)(bytes,{params:{[constants.BROTLI_PARAM_QUALITY]:6}});const gz=await promisify(gzip)(bytes,{level:6});packed+=Math.min(bytes.length,brotli.length);if(brotli.length<bytes.length)await writeFile(path+'.br',brotli);if(gz.length<bytes.length)await writeFile(path+'.gz',gz);}}
 await Promise.all([compress(),compress()]);
@@ -27,4 +27,4 @@ await rm(previous,{recursive:true,force:true});let hadPrevious=false;
 try{await stat(target);await rename(target,previous);hadPrevious=true;}catch(error){if(error.code!=='ENOENT')throw error;}
 try{await rename(stage,target);}catch(error){if(hadPrevious)await rename(previous,target);throw error;}
 await rm(previous,{recursive:true,force:true});
-console.log(`Prepared self-drawn Web 0.31.1: ${entries.length} assets, ${(raw/1048576).toFixed(2)} MB raw / ${(packed/1048576).toFixed(2)} MB Brotli.`);
+console.log(`Prepared self-drawn Web 0.31.2: ${entries.length} assets, ${(raw/1048576).toFixed(2)} MB raw / ${(packed/1048576).toFixed(2)} MB Brotli.`);

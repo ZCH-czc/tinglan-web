@@ -1,3 +1,4 @@
+import {tr,setLanguage,currentLanguage,languageMessages} from './i18n.mjs';
 import {STATIC_HOSTING} from './deployment.mjs';
 import {ImageGallery,galleryImage} from './image-gallery.mjs';
 import {searchTerm,rememberSearch,forgetSearch} from './search-history.mjs';
@@ -117,8 +118,8 @@ const lyricSources=new LyricsSourceSwitcher({current:()=>track(engine?.currentId
   begin:id=>{lyricsController?.abort();lastLyricsId='';const revision=(lyricsRevisions.get(id)||0)+1;lyricsRevisions.set(id,revision);return revision;}});
 const collapsed=new Set();const coversPending=new Set();const coverFailures=new Map();const coversUrls=new Map();
 const favoriteRevisions=new Map();const lyricsRevisions=new Map();const savingTracks=new Map();const sources=STATIC_HOSTING?[]:['qq','bili','netease'];
-const queueMetadata=new QueueMetadataSaver(ensureSaved,failures=>{if(failures.length)toastMessage('Some queue information was not saved');persist();});
-const names={qq:'QQ Music',bili:'Bilibili',netease:'NetEase Music'};
+const queueMetadata=new QueueMetadataSaver(ensureSaved,failures=>{if(failures.length)toastMessage(tr("Some queue information was not saved"));persist();});
+const names={qq:tr("QQ Music"),bili:'Bilibili',netease:tr("NetEase Music")};
 const decode=value=>{try{return JSON.parse(value)}catch{return null}};
 const track=id=>records.get(id) || remote.get(id);
 function trimRemote(){pruneCatalog(remote,{sections:[...homeSections,...searchSections,{songs:creatorPages?.retainedSongs() || []},{songs:collectionPages?.retainedSongs() || []},{songs:feedPages?.retainedSongs() || []},{songs:dynamicPages?.retainedSongs() || []},{songs:[...(biliState?.parts || []).map(row=>row.song),...(biliState?.collection?.songs || [])]}],queue:engine?[...decode(engine.queueIdsJson()),...decode(engine.undoQueueIdsJson())]:[],current:engine?.currentId(),target:dialog?target:commentId,pending:[...savingTracks.keys()]});engine?.releaseUnretained([...records.keys(),...savingTracks.keys(),...(importReservation?.ids || [])].join('\n'));}
@@ -129,8 +130,8 @@ function registerImages(value,depth=0) {
   if(/^image-(qq|bili|netease)-[a-f0-9]{40}$/.test(value.key || '') && typeof value.path==='string' && value.path.startsWith('/api/public-image?')){contentImages.delete(value.key);contentImages.set(value.key,value.path);while(contentImages.size>4096)contentImages.delete(contentImages.keys().next().value);return;}
   for(const key of ['image','avatar','pictures','emotes','previews','parent','items','creators','playlist','activity','original'])if(value[key])registerImages(value[key],depth+1);
 }
-const visualComment=row=>({...row,atText:row.at>0 && row.at<8640000000000?new Date(row.at*1000).toLocaleString('en-US',{dateStyle:'short',timeStyle:'short'}):'',avatarKey:row.avatar?.key || '',avatar:undefined,emotes:row.emotes?.map(item=>({token:item.token,key:item.image.key})),pictures:row.pictures?.map(item=>item.key),previews:row.previews?.map(visualComment)});
-const visualActivity=row=>({...row,avatar:undefined,avatarKey:row.avatar?.key || '',atText:row.atLabel || (row.at>0 && row.at<8640000000000?new Date(row.at*1000).toLocaleString('en-US',{dateStyle:'short',timeStyle:'short'}):''),emotes:row.emotes?.map(item=>({token:item.token,key:item.image.key})),pictures:row.pictures?.map(item=>item.key),song:row.song?enrich(row.song):null,original:row.original?visualActivity(row.original):null});
+const visualComment=row=>({...row,atText:row.at>0 && row.at<8640000000000?new Date(row.at*1000).toLocaleString(currentLanguage(),{dateStyle:'short',timeStyle:'short'}):'',avatarKey:row.avatar?.key || '',avatar:undefined,emotes:row.emotes?.map(item=>({token:item.token,key:item.image.key})),pictures:row.pictures?.map(item=>item.key),previews:row.previews?.map(visualComment)});
+const visualActivity=row=>({...row,avatar:undefined,avatarKey:row.avatar?.key || '',atText:row.atLabel || (row.at>0 && row.at<8640000000000?new Date(row.at*1000).toLocaleString(currentLanguage(),{dateStyle:'short',timeStyle:'short'}):''),emotes:row.emotes?.map(item=>({token:item.token,key:item.image.key})),pictures:row.pictures?.map(item=>item.key),song:row.song?enrich(row.song):null,original:row.original?visualActivity(row.original):null});
 const viewKey=()=>page==='accounts'?`${page}|${accountSource}`:page==='cache'?`${page}|${cacheFilter}|${cachePage}`:page==='radio'?`${page}|${radioScope}|${radioQuery.trim().toLowerCase()}`:page==='statistics'?`${page}|${statsPeriod}|${statsOffset}`:page==='creator'?`${page}|${creatorSource}|${creatorId}|${creatorPage}|${creatorTab}`:page==='comments'?`${page}|${commentId}|${commentRoot}|${commentOrder}|${commentCursor}`:page==='collection'?`${page}|${collectionSource}|${collectionId}|${collectionPage}`:page==='dynamic'?`${page}|${dynamicId}`:page==='following'?`${page}|${followingTab}`:page==='live'?`${page}|${liveRoomId}`:page==='notes'?`${page}|${notesCategory}|${notesPage}`:page==='library'?`${page}|${playlistId}|${libraryGroup}`:page==='search'?`${page}|${searchKind}`:page;
 const enrich=row=>{const value=track(row.id) || row;return {id:row.id,title:value.title,artist:value.artist,album:value.album || '',durationMs:value.durationMs || 0,favorite:!!value.favorite,hasArtwork:!!(value.hasArtwork || value.artworkUrl),source:value.source || 'local',cached:!!value.cached,cacheMode:cacheKind(value),fileBytes:value.size || 0,lyricsSource:value.lyricsSource || '',creatorId:value.creatorId || '',queueKey:row.queueKey,queueIndex:row.queueIndex}};
 function toastMessage(text) {toast=text;clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast='';emit()},3800);emit();}
@@ -186,7 +187,7 @@ function emit() {
         creator:creatorState?{...creatorState,songs:undefined,profile:{...creatorState.profile,hasArtwork:!!creatorState.profile.avatarUrl,avatarUrl:undefined}}:null,
         creatorSongs:creatorState?cachedData('creator-songs',`${libraryRevision}|${creatorRevision}`,()=>creatorState.songs.map(enrich)):empty,
         comments:commentState?cachedData('comments',String(commentRevision),()=>commentState.items.map(visualComment)):empty,
-        commentInfo:commentState?{...commentState,items:undefined,subject:track(commentId)?enrich(track(commentId)):commentState.subject || null,parent:commentRoot?visualComment(commentPages.findComment(commentRoot,commentId) || {id:commentRoot,author:'Original comment',text:''}):null}:null,
+        commentInfo:commentState?{...commentState,items:undefined,subject:track(commentId)?enrich(track(commentId)):commentState.subject || null,parent:commentRoot?visualComment(commentPages.findComment(commentRoot,commentId) || {id:commentRoot,author:tr("Original comment"),text:''}):null}:null,
         creatorTab,followingTab,feedInfo:feedState?{...feedState,items:undefined,seen:undefined}:null,
         activities:feedState?cachedData('activities',`${libraryRevision}|${feedRevision}`,()=>feedState.items.map(visualActivity)):empty,
         activityDetails:dynamicState?.activity?cachedData('activity-detail',`${libraryRevision}|${dynamicRevision}`,()=>[visualActivity(dynamicState.activity)]):empty,
@@ -216,9 +217,10 @@ function finishQueueEdit(result,playing){
   if(!result.changed)return;
   ++queueRevision;queueStart=Math.min(queueStart,Math.max(0,engine.queueSize()-1));
   if(result.removedCurrent){if(engine.currentId())playback.switchTo(engine.currentId(),{play:playing});else{playback.stop();navigation.update({player:false},{replace:true})}}
-  dialog='';if(engine.canUndoQueueEdit())offerQueueUndo('Removed from queue');else queueUndo='';emit();persist();
+  dialog='';if(engine.canUndoQueueEdit())offerQueueUndo(tr("Removed from queue"));else queueUndo='';emit();persist();
 }
-function persist() {clearTimeout(prefsTimer);prefsTimer=setTimeout(()=>store.saveSettings(snapshotPreferences()).catch(()=>toastMessage('Settings were not saved')),250);}
+function persist(immediate=false) {clearTimeout(prefsTimer);const save=()=>store.saveSettings(snapshotPreferences()).catch(()=>toastMessage(tr("Settings were not saved")));if(immediate)return save();prefsTimer=setTimeout(save,250);}
+function applyLanguage(initial=false){const language=setLanguage(preferences.language);ui?.setUiLanguage(language,initial?JSON.stringify(languageMessages()):'');document.documentElement.lang=language;document.title=language==='zh-CN'?'听岚 · Web':'Tinglan · Web';dataCache.clear();}
 function syncClock() {
   clearTimeout(clockTimer);if(!ui || !engine)return;
   const at=playback?.position() ?? engine.positionMs();
@@ -236,7 +238,7 @@ function chooseFiles(kind,accept,multiple=false,directory=false) {
   input.addEventListener('cancel',()=>input.remove(),{once:true});document.body.append(input);input.click();
 }
 async function putRecord(record,file,art) {
-  if(!records.has(record.id) && records.size>=LIMITS.tracks)throw new Error('Library capacity is 10000 tracks');
+  if(!records.has(record.id) && records.size>=LIMITS.tracks)throw new Error(tr("Library capacity is 10000 tracks"));
   await store.putTrack(record,file,art,{maxTracks:LIMITS.tracks});records.set(record.id,record);remote.delete(record.id);
   ++libraryRevision;
   engine.upsertTrack(record.id,record.title,record.artist,record.durationMs,record.favorite);if(record.lyrics)engine.setLyrics(record.id,record.lyrics);
@@ -245,8 +247,8 @@ async function ensureSaved(id) {
   if(records.has(id))return records.get(id);
   if(importReservation?.ids.has(id)){await importReservation.promise;if(records.has(id))return records.get(id);}
   if(savingTracks.has(id))return savingTracks.get(id);
-  if(records.size+savingTracks.size+(importReservation?.ids.size || 0)>=LIMITS.tracks)throw new Error('Library capacity is 10000 tracks');
-  const value=remote.get(id);if(!value)throw new Error('Track metadata missing. Search again');
+  if(records.size+savingTracks.size+(importReservation?.ids.size || 0)>=LIMITS.tracks)throw new Error(tr("Library capacity is 10000 tracks"));
+  const value=remote.get(id);if(!value)throw new Error(tr("Track metadata missing. Search again"));
   const task=(async()=>{
     const record=normalizeTrack({...value,size:0,type:'',cached:false,lyrics:'',addedAt:Date.now()});
     await store.putTrack(record,undefined,undefined,{maxTracks:LIMITS.tracks});
@@ -257,14 +259,14 @@ async function ensureSaved(id) {
   try{return await task}finally{if(savingTracks.get(id)===task)savingTracks.delete(id)}
 }
 async function importMusic(files) {
-  if(busy){toastMessage('A task is running. Import again later');return}busy=true;progress=0;let imported=0,failed=0;
+  if(busy){toastMessage(tr("A task is running. Import again later"));return}busy=true;progress=0;let imported=0,failed=0;
   try {
     const music=files.filter(f=>/^audio\//.test(f.type) || /\.(mp3|m4a|aac|flac|wav|ogg|opus|aiff?|ape|wma)$/i.test(f.name));
-    if(music.length+records.size>LIMITS.tracks)throw new Error('Library capacity is 10000 tracks');
+    if(music.length+records.size>LIMITS.tracks)throw new Error(tr("Library capacity is 10000 tracks"));
     for(let index=0;index<music.length;index++) {
-      const file=music[index];message=`Importing ${index+1}/${music.length} · ${file.name}`;progress=index/music.length;emit();
+      const file=music[index];message=tr("Importing {0}/{1} · {2}", index+1, music.length, file.name);progress=index/music.length;emit();
       try {
-        if(file.size>LIMITS.audio)throw new Error('Track exceeds 512 MB');
+        if(file.size>LIMITS.audio)throw new Error(tr("Track exceeds 512 MB"));
         const id=await fileIdentity(file);if(records.has(id))continue;
         let tags={};try{tags=await metadata.run('metadata',file)}catch{/* Filename remains usable for unsupported tags. */}
         const fallback=trackFromFile(file,id);
@@ -277,26 +279,26 @@ async function importMusic(files) {
       const stem=(file.webkitRelativePath || file.name).replace(/\.lrc$/i,'');const found=[...records.values()].find(r=>(r.relativePath || r.filename).replace(/\.[^.]+$/,'')===stem);
       if(found && file.size<=600_000)await saveLyrics(found.id,await file.text(),false,'local');
     }
-    toastMessage(`Imported ${imported} tracks ${failed?`，${failed} files incomplete`:''}`);await updateStorage();
+    toastMessage(tr("Imported {0} tracks{1}",imported,failed?tr(", {0} files incomplete",failed):''));await updateStorage();
   } finally {busy=false;progress=0;message='';emit();persist()}
 }
 async function handleFiles(kind,files) {
   if(!files.length)return;
-  if(kind.startsWith('playlist-art:')){const id=kind.slice(13);if(!playlistMetadata.has(id))throw new Error('Playlist no longer exists');const [full,thumb]=await resizeArtwork(files[0]);await playlistEditor.run(id,old=>{if(!old)throw new Error('Playlist no longer exists');return {...old,background:'custom'};},value=>store.setPlaylistArtwork(value,full,thumb));toastMessage('Playlist background saved');return;}
+  if(kind.startsWith('playlist-art:')){const id=kind.slice(13);if(!playlistMetadata.has(id))throw new Error(tr("Playlist no longer exists"));const [full,thumb]=await resizeArtwork(files[0]);await playlistEditor.run(id,old=>{if(!old)throw new Error(tr("Playlist no longer exists"));return {...old,background:'custom'};},value=>store.setPlaylistArtwork(value,full,thumb));toastMessage(tr("Playlist background saved"));return;}
   if(kind==='recognition'){if(dialog==='recognition')await recognition.start(files[0]);return;}
   if(kind==='music')return importMusic(files);
   if(kind==='backup')return prepareBackup(files[0]);
   if(kind==='lyrics') {
-    if(files[0].size>600_000)throw new Error('Lyrics file is too large');
+    if(files[0].size>600_000)throw new Error(tr("Lyrics file is too large"));
     const text=await files[0].text();await saveLyrics(target || engine.currentId(),text,true,'local');dialogText=text;dialog='lyrics-edit';emit();return;
   }
   if(kind==='art') {
     const id=target || engine.currentId();await ensureSaved(id);const [full,thumb]=await resizeArtwork(files[0]);await store.setArtwork(id,full,thumb);records.get(id).hasArtwork=true;++libraryRevision;
-    invalidateCover(id);emit();toastMessage('Artwork updated');
+    invalidateCover(id);emit();toastMessage(tr("Artwork updated"));
   }
 }
 let fontRevision=0;
-async function loadOptionalFont(value){const name={serif:'noto_serif_sc.otf',wenkai:'lxgw_wenkai_lite.ttf',nunito:'nunito_variable.ttf'}[value];if(!name)return;const response=await fetch('./composeResources/dev.tinglan.ui.generated.resources/font/'+name,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw new Error('Unable to load font. Connect and retry');await response.arrayBuffer();}
+async function loadOptionalFont(value){const name={serif:'noto_serif_sc.otf',wenkai:'lxgw_wenkai_lite.ttf',nunito:'nunito_variable.ttf'}[value];if(!name)return;const response=await fetch('./composeResources/dev.tinglan.ui.generated.resources/font/'+name,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw new Error(tr("Unable to load font. Connect and retry"));await response.arrayBuffer();}
 function invalidateCover(id) {for(const key of [id,id+':full']){coverFailures.delete(key);ui.deliverArtwork(key,'')}if(coversUrls.has(id)){URL.revokeObjectURL(coversUrls.get(id));coversUrls.delete(id)}}
 async function sendCover(key) {
   if(/^radio-art-[a-f0-9-]{36}$/.test(key))return sendRadioCover(key);
@@ -332,21 +334,21 @@ async function checkAccount(id) {
   if(!sources.includes(id) || accountChecking || accountChanging || accountReader.state.loading)return;accountChecking=id;accountError='';emit();
   const generation=platform.generation;
   try {const value=await platform.request('/api/account/check',{method:'POST',body:{source:id},timeoutMs:60000});if(generation===platform.generation)accountReader.accept(value);}
-  catch(error){if(generation===platform.generation && error.name!=='AbortError')accountError=error.message || 'Account verification incomplete';}
+  catch(error){if(generation===platform.generation && error.name!=='AbortError')accountError=error.message || tr("Account verification incomplete");}
   finally{accountChecking='';emit();}
 }
 async function changeAccount(id,cookie) {
   if(!sources.includes(id) || accountChanging || accountChecking)return;accountChanging=true;accountSession.close();emit();
   const owner=dialog;
-  try {accountReader.accept(await platform.account(id,cookie));accountError='';await resetPlatformContent();if(dialog===owner && target===id){dialog='';dialogText='';}toastMessage(cookie?'Session connected. Verify account status':'Signed out of platform');}
+  try {accountReader.accept(await platform.account(id,cookie));accountError='';await resetPlatformContent();if(dialog===owner && target===id){dialog='';dialogText='';}toastMessage(cookie?tr("Session connected. Verify account status"):tr("Signed out of platform"));}
   finally{accountChanging=false;emit();}
 }
 async function deliverLoginImage(key,path,signal) {
   if(!path){ui.deliverArtwork(key,'');return;}
   const response=await fetch(path,{credentials:'same-origin',signal,cache:'no-store'});
-  if(!response.ok || response.headers.get('content-type')?.split(';')[0]!=='image/png')throw new Error('Unable to load sign-in QR code');
+  if(!response.ok || response.headers.get('content-type')?.split(';')[0]!=='image/png')throw new Error(tr("Unable to load sign-in QR code"));
   const bytes=new Uint8Array(await response.arrayBuffer());signal?.throwIfAborted();
-  if(bytes.length<100 || bytes.length>500000)throw new Error('Invalid sign-in QR image');
+  if(bytes.length<100 || bytes.length>500000)throw new Error(tr("Invalid sign-in QR image"));
   let binary='';for(let i=0;i<bytes.length;i+=4096)binary+=String.fromCharCode(...bytes.subarray(i,i+4096));
   ui.deliverArtwork(key,btoa(binary));
 }
@@ -354,7 +356,7 @@ async function hydrate() {
   const [saved,values,playlists,totalNotes]=await Promise.all([store.settings(),store.tracks(),store.playlists(),noteStore.count().catch(()=>null)]);if(totalNotes!==null)noteCount=totalNotes;engine.resetEngine();records.clear();playlistMetadata.clear();
   for(const value of values) {try{const record=normalizeTrack(value);if(engine.upsertTrack(record.id,record.title,record.artist,record.durationMs,record.favorite)){records.set(record.id,record);if(record.lyrics)engine.setLyrics(record.id,record.lyrics)}}catch{/* Preserve other readable tracks. */}}
   for(const p of playlists) {if(Array.isArray(p.trackIds)){engine.upsertPlaylist(p.id,p.name,[...new Set(p.trackIds.filter(id=>records.has(id)))].join('\n'),Number(p.createdAt)||0);playlistMetadata.set(p.id,p);}}
-  preferences=normalizePreferences(saved,new Set(records.keys()));if(preferences.font!=='sans'){try{await loadOptionalFont(preferences.font);}catch{preferences.font='sans';toastMessage('Font unavailable. Using the default font');}}if(preferences.queue.length){if(preferences.queueIndex>=0)engine.setQueueIdsAt(preferences.queue.join('\n'),preferences.queueIndex);else engine.setQueueIds(preferences.queue.join('\n'));}engine.setRepeatMode(preferences.repeat);engine.setShuffleEnabled(preferences.shuffle);
+  preferences=normalizePreferences(saved,new Set(records.keys()));applyLanguage(true);if(preferences.font!=='sans'){try{await loadOptionalFont(preferences.font);}catch{preferences.font='sans';toastMessage(tr("Font unavailable. Using the default font"));}}if(preferences.queue.length){if(preferences.queueIndex>=0)engine.setQueueIdsAt(preferences.queue.join('\n'),preferences.queueIndex);else engine.setQueueIds(preferences.queue.join('\n'));}engine.setRepeatMode(preferences.repeat);engine.setShuffleEnabled(preferences.shuffle);
   if(preferences.currentId && (!preferences.queue.length || preferences.queue.includes(preferences.currentId)))engine.selectTrack(preferences.currentId);engine.setPosition(preferences.position);
   ++libraryRevision;++playlistRevision;++queueRevision;dataCache.clear();bridge.reset();
 }
@@ -371,7 +373,7 @@ async function loadSections(scope,force=false,only='') {
       const data=await platform.catalog(id,term,1,{force,scope,kind});if(revision!==(scope==='home'?homeRevision:searchRevision))return;
       const section=sections.find(s=>s.id===id);section.songs=data.songs || [];section.creators=data.creators || [];section.more=data.more;section.page=1;section.error=data.warning || '';registerImages(data);
       for(const s of section.songs)if(!records.has(s.id))remote.set(s.id,s);trimRemote();
-    } catch(failure) {if(failure.name==='AbortError' || revision!==(scope==='home'?homeRevision:searchRevision))return;sections.find(s=>s.id===id).error=failure.message || 'Connection temporarily unavailable';}
+    } catch(failure) {if(failure.name==='AbortError' || revision!==(scope==='home'?homeRevision:searchRevision))return;sections.find(s=>s.id===id).error=failure.message || tr("Connection temporarily unavailable");}
     finally {if(revision===(scope==='home'?homeRevision:searchRevision)){sections.find(s=>s.id===id).loading=false;++sectionRevision;emit()}}
   }));
 }
@@ -396,20 +398,20 @@ async function play(id,context='',ids,{position=0,guard=()=>true,queueKey='',que
   if(radio?.active)await radio.close({resume:false});
   if(live?.active){await live.close({resume:false});liveHost.close();navigation.update({page:'home'},{replace:true});}
   if(!guard())return false;
-  if(!track(id)){toastMessage('Track metadata changed. Select it again');return}
+  if(!track(id)){toastMessage(tr("Track metadata changed. Select it again"));return}
   if(importReservation)await importReservation.promise;
   if(!guard())return false;
-  if(context==='queue' && (!queueKey || engine.queueEntryId(queueKey)!==id || !engine.selectQueueEntry(queueKey)))throw new Error('Queue entry changed. Select it again');
-  error='';if(!engine.upsertTrack(id,track(id).title,track(id).artist,track(id).durationMs,track(id).favorite))throw new Error('Library is full. Remove unwanted tracks and retry');
+  if(context==='queue' && (!queueKey || engine.queueEntryId(queueKey)!==id || !engine.selectQueueEntry(queueKey)))throw new Error(tr("Queue entry changed. Select it again"));
+  error='';if(!engine.upsertTrack(id,track(id).title,track(id).artist,track(id).durationMs,track(id).favorite))throw new Error(tr("Library is full. Remove unwanted tracks and retry"));
   if(preferences.autoOpen && context!=='queue')navigation.update({player:true});
   engine.selectTrack(id);emit();
   if(context==='queue'){playback.switchTo(id,{position});persist();return;}
   const requested=context==='handoff'?(ids || [id]):[...new Set(ids || contextIds(context,id))];
   const candidates=requested.includes(id)?requested:[id];
   const wanted=candidates.filter(queuedId=>{const value=track(queuedId);return !!value && engine.upsertMetadata(value.id,value.title,value.artist,value.durationMs,value.favorite)});
-  if(context==='handoff' && wanted.length!==requested.length)throw new Error('Handoff queue not fully loaded. Receive it again');
-  if(!(context==='handoff'?engine.setQueueIdsAt(wanted.join('\n'),queueIndex):engine.setQueueIds(wanted.join('\n'))))throw new Error('Unable to update playlist. Select it again');
-  if(wanted.length<candidates.length)toastMessage(`Added ${wanted.length} tracks，${candidates.length-wanted.length} tracks could not be queued due to invalid metadata or capacity`);
+  if(context==='handoff' && wanted.length!==requested.length)throw new Error(tr("Handoff queue not fully loaded. Receive it again"));
+  if(!(context==='handoff'?engine.setQueueIdsAt(wanted.join('\n'),queueIndex):engine.setQueueIds(wanted.join('\n'))))throw new Error(tr("Unable to update playlist. Select it again"));
+  if(wanted.length<candidates.length)toastMessage(tr("Added {0} tracks，{1} tracks could not be queued due to invalid metadata or capacity", wanted.length, candidates.length-wanted.length));
   ++queueRevision;
   playback.switchTo(id,{position});
   queueMetadata.select(wanted);persist();
@@ -425,7 +427,7 @@ async function fetchLyrics(id,{force=false,background=false,sourceName='platform
   catch(failure){if(force)throw failure;/* Audio remains usable if lyrics are temporarily unavailable. */}
 }
 async function saveLyrics(id,text,edited,sourceName,expectedRevision,owned=()=>true) {
-  if(text.length>LIMITS.lyrics)throw new Error('Lyrics are too large');const record=await ensureSaved(id);
+  if(text.length>LIMITS.lyrics)throw new Error(tr("Lyrics are too large"));const record=await ensureSaved(id);
   if(!owned() || expectedRevision!==undefined && expectedRevision!==(lyricsRevisions.get(id)||0))return false;
   lyricsRevisions.set(id,(lyricsRevisions.get(id)||0)+1);
   const patch={lyrics:text,lyricsEdited:edited,lyricsSource:sourceName,originalLyrics:edited?(record.originalLyrics || record.lyrics):text};
@@ -433,13 +435,13 @@ async function saveLyrics(id,text,edited,sourceName,expectedRevision,owned=()=>t
   ++libraryRevision;return true;
 }
 async function favorite(id) {
-  if(busy){toastMessage('A task is running. Save again later');return}
+  if(busy){toastMessage(tr("A task is running. Save again later"));return}
   const revision=(favoriteRevisions.get(id)||0)+1;favoriteRevisions.set(id,revision);
   const value=track(id);if(!value)return;const old=value.favorite;const desired=!old;value.favorite=desired;++libraryRevision;engine.upsertMetadata(id,value.title,value.artist,value.durationMs,desired);emit();
   try{const record=await ensureSaved(id);if(favoriteRevisions.get(id)!==revision)return;await store.patchTrack(id,{favorite:desired});if(favoriteRevisions.get(id)===revision){record.favorite=desired;emit()}}
-  catch(e){const saved=await store.read('tracks',id).catch(()=>null);if(favoriteRevisions.get(id)===revision){const actual=saved?.favorite ?? old;value.favorite=actual;if(track(id))track(id).favorite=actual;++libraryRevision;engine.upsertMetadata(id,value.title,value.artist,value.durationMs,actual);if(actual!==desired)toastMessage('Unable to save favorite');emit()}}
+  catch(e){const saved=await store.read('tracks',id).catch(()=>null);if(favoriteRevisions.get(id)===revision){const actual=saved?.favorite ?? old;value.favorite=actual;if(track(id))track(id).favorite=actual;++libraryRevision;engine.upsertMetadata(id,value.title,value.artist,value.durationMs,actual);if(actual!==desired)toastMessage(tr("Unable to save favorite"));emit()}}
 }
-async function updateStorage() {if(navigator.storage?.estimate){const data=await navigator.storage.estimate();storage=`${records.size} tracks · Used ${((data.usage||0)/1024/1024).toFixed(1)} MB${data.quota?` / ${Math.floor(data.quota/1024/1024)} MB`:''}`;}else storage=`${records.size} tracks`;emit();}
+async function updateStorage() {if(navigator.storage?.estimate){const data=await navigator.storage.estimate();storage=tr("{0} tracks · Used {1} MB{2}", records.size, ((data.usage||0)/1024/1024).toFixed(1), data.quota?` / ${Math.floor(data.quota/1024/1024)} MB`:'');}else storage=tr("{0} tracks", records.size);emit();}
 function cacheProtected(){
   const ids=new Set();if(!engine)return ids;const current=engine.currentId();if(current)ids.add(current);
   let index=engine.currentQueueIndex()+1;if(index>=engine.queueSize() && engine.repeatMode()==='ALL')index=0;
@@ -458,19 +460,19 @@ function applyCacheUpdates(updates){
   }++libraryRevision;emit();syncClock();
 }
 function cacheSong(id){
-  if(accountChanging){toastMessage('Account is switching. Download again later');return;}
-  const row=track(id);if(!row || row.source==='local'){toastMessage('Local music is already saved in this browser');return;}
-  dialog='';emit();toastMessage('Added to offline download queue');
-  mediaCache.request(id).then(()=>{const task=mediaCache.tasks.find(task=>task.id===id);toastMessage(task?.warning || 'Downloaded with lyrics and available artwork');}).catch(error=>{if(error.name!=='AbortError')toastMessage(error.name==='QuotaExceededError'?'Browser storage is full. Clear cache first':error.message || 'Download incomplete');});
+  if(accountChanging){toastMessage(tr("Account is switching. Download again later"));return;}
+  const row=track(id);if(!row || row.source==='local'){toastMessage(tr("Local music is already saved in this browser"));return;}
+  dialog='';emit();toastMessage(tr("Added to offline download queue"));
+  mediaCache.request(id).then(()=>{const task=mediaCache.tasks.find(task=>task.id===id);toastMessage(task?.warning || tr("Downloaded with lyrics and available artwork"));}).catch(error=>{if(error.name!=='AbortError')toastMessage(error.name==='QuotaExceededError'?tr("Browser storage is full. Clear cache first"):error.message || tr("Download incomplete"));});
 }
 async function importCollection() {
-  if(busy)throw new Error('A task is running. Save the playlist later');
+  if(busy)throw new Error(tr("A task is running. Save the playlist later"));
   const request={source:collectionSource,id:collectionId},id=`collection-${request.source}-${request.id}`;
   if(decode(engine.playlistJson(id))){navigation.update({page:'library',tab:'playlists',playlistId:id,player:false,videoOpen:false});return;}
-  const controller=new AbortController();importAbort=controller;busy=true;message='Collecting playlist';progress=0;emit();
+  const controller=new AbortController();importAbort=controller;busy=true;message=tr("Collecting playlist");progress=0;emit();
   let reservation;
   try {
-    const plan=await collectPlaylist((...args)=>platform.collection(...args),request,{signal:controller.signal,progress:value=>{message=`Collecting playlist · Page ${value.page}  · ${value.received} tracks`;progress=value.total?Math.min(.85,(value.received+value.unavailable)/value.total*.85):0;emit();}});
+    const plan=await collectPlaylist((...args)=>platform.collection(...args),request,{signal:controller.signal,progress:value=>{message=tr("Collecting playlist · Page {0}  · {1} tracks", value.page, value.received);progress=value.total?Math.min(.85,(value.received+value.unavailable)/value.total*.85):0;emit();}});
     await Promise.allSettled([...savingTracks.values()]);controller.signal.throwIfAborted();
     const wanted=[];
     for(let index=0;index<plan.songs.length;index++) {
@@ -479,10 +481,10 @@ async function importCollection() {
     }
     const newIds=new Set(wanted.filter(row=>!records.has(row.id)).map(row=>row.id));
     const engineIds=new Set([...records.keys(),...newIds,...decode(engine.queueIdsJson()),engine.currentId()].filter(Boolean));
-    if(engineIds.size>LIMITS.tracks || decode(engine.playlistsJson()).length>=LIMITS.playlists)throw new Error('Library is full. Remove tracks or playlists first');
+    if(engineIds.size>LIMITS.tracks || decode(engine.playlistsJson()).length>=LIMITS.playlists)throw new Error(tr("Library is full. Remove tracks or playlists first"));
     let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});reservation={ids:newIds,promise,resolve,reject};importReservation=reservation;
-    message='Saving complete playlist';progress=.9;emit();
-    const playlist={id,name:plan.playlist.title.trim().slice(0,80) || 'Platform playlists',trackIds:wanted.map(row=>row.id),createdAt:Date.now()};
+    message=tr("Saving complete playlist");progress=.9;emit();
+    const playlist={id,name:plan.playlist.title.trim().slice(0,80) || tr("Platform playlists"),trackIds:wanted.map(row=>row.id),createdAt:Date.now()};
     const accepted=await store.importPlaylist(wanted,playlist,{signal:controller.signal});
     importAbort=null;for(const record of accepted)if(!records.has(record.id)){records.set(record.id,record);remote.delete(record.id);}trimRemote();
     for(let index=0;index<accepted.length;index++) {
@@ -490,8 +492,8 @@ async function importCollection() {
       if(index>0 && index%200===0)await new Promise(resolve=>setTimeout(resolve,0));
     }
     playlistMetadata.set(playlist.id,playlist);engine.upsertPlaylist(playlist.id,playlist.name,playlist.trackIds.join('\n'),playlist.createdAt);++libraryRevision;++playlistRevision;reservation.resolve();
-    toastMessage(`Playlist saved：${wanted.length} available tracks ${plan.unavailable?`，${plan.unavailable} items unavailable`:''}`);await updateStorage();persist();
-  } catch(error){reservation?.reject(error);if(error.name==='AbortError')toastMessage('Playlist save cancelled');else throw error;}
+    toastMessage(tr("Playlist saved: {0} available tracks{1}",wanted.length,plan.unavailable?tr(", {0} items unavailable",plan.unavailable):''));await updateStorage();persist();
+  } catch(error){reservation?.reject(error);if(error.name==='AbortError')toastMessage(tr("Playlist save cancelled"));else throw error;}
   finally {if(importReservation===reservation)importReservation=null;if(importAbort===controller)importAbort=null;busy=false;message='';progress=0;emit();}
 }
 async function resetPlatformContent() {
@@ -514,15 +516,15 @@ async function resetPlatformContent() {
 function handoffOwner() {return {id:engine.currentId(),key:engine.currentQueueKey(),queueRevision,queue:engine.queueIdsJson(),epoch:mediaEpoch,account:platform.accountRevision};}
 function handoffStillOwned(owner) {return owner && owner.id===engine.currentId() && owner.key===engine.currentQueueKey() && owner.queueRevision===queueRevision && owner.queue===engine.queueIdsJson() && owner.epoch===mediaEpoch && owner.account===platform.accountRevision;}
 function outgoingHandoff(identity) {
-  if(radio?.active)throw new Error('Live radio does not support handoff. Choose a platform track or video');
-  if(live?.active)throw new Error('Live streams do not support handoff. Choose a platform track or video');
+  if(radio?.active)throw new Error(tr("Live radio does not support handoff. Choose a platform track or video"));
+  if(live?.active)throw new Error(tr("Live streams do not support handoff. Choose a platform track or video"));
   const queue=decode(engine.queueIdsJson()).map(track);
   return buildHandoff(queue,engine.currentId(),playback.position(),{...identity,currentIndex:engine.currentQueueIndex()});
 }
 async function prepareHandoff(plan) {
   if(importReservation)await importReservation.promise;
   const added=plan.metadata.filter(row=>!records.has(row.id)).length;
-  if(records.size+added>LIMITS.tracks)throw new Error('Not enough library space for this queue. Remove unwanted tracks first');
+  if(records.size+added>LIMITS.tracks)throw new Error(tr("Not enough library space for this queue. Remove unwanted tracks first"));
 }
 async function continueHandoff(plan,owner) {
   if(!handoffStillOwned(owner))return false;
@@ -536,22 +538,22 @@ async function continueHandoff(plan,owner) {
 }
 function download(blob,name) {const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=name;link.hidden=true;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60_000);}
 async function exportBackup() {
-  if(busy)return;const revision=++backupRevision;busy=true;dialog='backup-progress';progress=0;message='Reading library';emit();
-  try{playback?.listeningSample();await listening?.flush();await playlistEditor.pending.catch(()=>{});const snapshot=await store.snapshot();if(revision!==backupRevision)return;snapshot.preferences=snapshotPreferences();const result=await backups.run('export',snapshot,value=>{progress=value.percent/100;message=value.phase;emit()});if(revision!==backupRevision)return;download(result.blob,`Tinglan backup-${new Date().toISOString().slice(0,10)}.tinglan`);toastMessage('Full backup download started')}
+  if(busy)return;const revision=++backupRevision;busy=true;dialog='backup-progress';progress=0;message=tr("Reading library");emit();
+  try{playback?.listeningSample();await listening?.flush();await playlistEditor.pending.catch(()=>{});const snapshot=await store.snapshot();if(revision!==backupRevision)return;snapshot.preferences=snapshotPreferences();const result=await backups.run('export',snapshot,value=>{progress=value.percent/100;message=value.phase;emit()});if(revision!==backupRevision)return;download(result.blob,tr("Tinglan backup-{0}.tinglan", new Date().toISOString().slice(0,10)));toastMessage(tr("Full backup download started"))}
   finally{if(revision===backupRevision){busy=false;dialog='';message='';emit()}}
 }
 async function prepareBackup(file) {
-  if(busy)return;const revision=++backupRevision;busy=true;dialog='backup-progress';message='Verifying backup';emit();
+  if(busy)return;const revision=++backupRevision;busy=true;dialog='backup-progress';message=tr("Verifying backup");emit();
   try{const snapshot=await backups.run('import',file,value=>{progress=value.percent/100;message=value.phase;emit()});if(revision!==backupRevision)return;
-    const mergedIds=new Set([...records.keys(),...snapshot.tracks.map(s=>s.id)]);const ps=new Set([...decode(engine.playlistsJson()).map(p=>p.id),...snapshot.playlists.map(p=>p.id)]);if(mergedIds.size>LIMITS.tracks || ps.size>LIMITS.playlists)throw new Error('Merged library would exceed its limit');
-    pendingBackup=snapshot;backupText=`Backup contains ${snapshot.tracks.length} tracks、${snapshot.playlists.length} playlists、${snapshot.notes?.length || 0} music notes、${snapshot.listening?.length || 0} listening records、${snapshot.radioLibrary?.favorites?.length || 0} favorite stations, plus lyrics, artwork, and settings.\n\n Restore merges into the current library. Duplicate tracks use backup data; other tracks are kept. Notes merge by update time, preserving newer local edits.\n\n Backups include station URLs, not live audio or sign-in credentials.`;dialog='backup-confirm';
+    const mergedIds=new Set([...records.keys(),...snapshot.tracks.map(s=>s.id)]);const ps=new Set([...decode(engine.playlistsJson()).map(p=>p.id),...snapshot.playlists.map(p=>p.id)]);if(mergedIds.size>LIMITS.tracks || ps.size>LIMITS.playlists)throw new Error(tr("Merged library would exceed its limit"));
+    pendingBackup=snapshot;backupText=tr("Backup contains {0} tracks、{1} playlists、{2} music notes、{3} listening records、{4} favorite stations, plus lyrics, artwork, and settings.\n\n Restore merges into the current library. Duplicate tracks use backup data; other tracks are kept. Notes merge by update time, preserving newer local edits.\n\n Backups include station URLs, not live audio or sign-in credentials.", snapshot.tracks.length, snapshot.playlists.length, snapshot.notes?.length || 0, snapshot.listening?.length || 0, snapshot.radioLibrary?.favorites?.length || 0);dialog='backup-confirm';
   }finally{if(revision===backupRevision){busy=false;message='';if(!pendingBackup)dialog='';emit()}}
 }
 async function restoreBackup() {
   if(live?.active){await live.close({resume:false});liveHost.close();navigation.update({page:'home'},{replace:true});}
-  if(!pendingBackup || busy)return;busy=true;message='Restoring library';emit();
+  if(!pendingBackup || busy)return;busy=true;message=tr("Restoring library");emit();
   try{await mediaCache?.clear();if(radio?.active)await radio.close({resume:false});queueMetadata.clear();clearTimeout(prefsTimer);playback.pause();video?.close(undefined,true);danmakuSession?.clear();navigation.update({videoOpen:false},{replace:true});await listening?.flush();const snapshot=pendingBackup;const prefs=normalizePreferences(snapshot.preferences,new Set([...records.keys(),...snapshot.tracks.map(s=>s.id)]));await playlistEditor.pending.catch(()=>{});await store.mergeBackup(snapshot,prefs);notePages?.invalidate();noteEditor?.close();noteUpdates?.notify();playback.stop();await hydrate();recognition?.setMode(preferences.recognitionMode);await recognition?.open();sound?.configure(preferences.audioEffects);await mediaCache.maintain();await radios.load();radioPages?.invalidate();selectRadio();ui.clearArtwork();coverFailures.clear();remote.clear();pendingBackup=null;dialog='';lastLyricsId='';
-    if(engine.currentId())await playback.switchTo(engine.currentId(),{play:false,position:preferences.position});sound.setVolume(preferences.volume/100);listening.setEnabled(preferences.recordListening!==false,track(engine.currentId()));statisticsChanged();toastMessage('Restored. Playback stays paused');await updateStorage();
+    if(engine.currentId())await playback.switchTo(engine.currentId(),{play:false,position:preferences.position});sound.setVolume(preferences.volume/100);listening.setEnabled(preferences.recordListening!==false,track(engine.currentId()));statisticsChanged();toastMessage(tr("Restored. Playback stays paused"));await updateStorage();
   }finally{busy=false;message='';emit()}
 }
 async function dispatch(action,data='') {
@@ -561,16 +563,16 @@ async function dispatch(action,data='') {
   if(radio?.active && !live?.active && ['toggle','next','previous','retry-play','queue-open'].includes(action)){if(action==='queue-open'){dialog='radio-queue';emit();}else if(action==='toggle')radio.toggle();else if(action==='next' || action==='previous')radio.change(action==='next'?1:-1);else radio.play();return;}
   const input=decode(data);
   if(live?.active && ['next','previous','toggle','seek','player-open','queue-open','retry-play'].includes(action)){await live.close({resume:false});liveHost.close();navigation.update({page:'home'},{replace:true});}
-  if(busy && ['dialog-save','remove','playlist-delete','playlist-add','favorite','cache','lyrics-import','artwork-import'].includes(action)){toastMessage('A task is running. Edit again later');return}
+  if(busy && ['dialog-save','remove','playlist-delete','playlist-add','favorite','cache','lyrics-import','artwork-import'].includes(action)){toastMessage(tr("A task is running. Edit again later"));return}
   switch(action) {
     case 'reload':if(updates?.available)updates.activate();else location.reload();break;
     case 'update-dismiss': updates?.dismiss();break;
     case 'apply-update': {
       if(!updates?.available || updates.requested)break;
       const downloading=()=>mediaCache?.queue.jobs.size || mediaCache?.background?.jobs.size || mediaCache?.tasks.some(row=>['queued','preparing','downloading','saving'].includes(row.status));
-      if(busy || downloading())throw new Error('Finish or cancel the current task before updating');
-      if(mediaCache?.background?.supported){const state=await mediaCache.background.call('status');if(state.rows?.some(row=>['queued','preparing','downloading','saving'].includes(row.status)))throw new Error('Finish or cancel background downloads before updating');}
-      if(busy || downloading())throw new Error('Finish or cancel the current task before updating');
+      if(busy || downloading())throw new Error(tr("Finish or cancel the current task before updating"));
+      if(mediaCache?.background?.supported){const state=await mediaCache.background.call('status');if(state.rows?.some(row=>['queued','preparing','downloading','saving'].includes(row.status)))throw new Error(tr("Finish or cancel background downloads before updating"));}
+      if(busy || downloading())throw new Error(tr("Finish or cancel the current task before updating"));
       if(live?.active){await live.close({resume:false});liveHost.close();navigation.update({page:'home'},{replace:true});}
       radio?.pause();playback.pause();clearTimeout(prefsTimer);await store.saveSettings(snapshotPreferences());updates.activate();break;
     }
@@ -587,13 +589,13 @@ async function dispatch(action,data='') {
     case 'transfer-start': await lan.start(data);break;
     case 'transfer-stop': await lan.stop();break;
     case 'transfer-retry': await lan.retry(data);break;
-    case 'transfer-copy': if(lan.state.active && lan.rawUrl){await clipboardWriter.write(lan.rawUrl);toastMessage('Receiver address copied');}break;
+    case 'transfer-copy': if(lan.state.active && lan.rawUrl){await clipboardWriter.write(lan.rawUrl);toastMessage(tr("Receiver address copied"));}break;
     case 'page-back': navigation.back();break;
     case 'creator-open': {const song=track(data || engine.currentId());if(song?.creatorId)navigation.update({page:'creator',creatorId:song.creatorId,creatorSource:song.source,creatorPage:1,creatorTab:song.source==='bili'?'dynamics':'works',player:false,videoOpen:false,queueOpen:false});break;}
     case 'creator-direct': if(sources.includes(input?.source) && input?.id)navigation.update({page:'creator',creatorSource:input.source,creatorId:input.id,creatorPage:1,creatorTab:input.source==='bili'?'dynamics':'works',player:false,videoOpen:false,queueOpen:false});break;
     case 'creator-tab': if(creatorSource==='bili')navigation.update({creatorTab:data==='dynamics'?'dynamics':'works',creatorPage:1},{replace:true});break;
     case 'following-open': navigation.update({page:'following',followingTab:'dynamics',player:false,videoOpen:false,queueOpen:false});break;
-    case 'live-open': {const id=liveRoomFromLink(data);if(!id)throw new Error('Enter a room ID or complete Bilibili live-stream URL');navigation.update({page:'live',liveRoomId:id,player:false,videoOpen:false,queueOpen:false});break;}
+    case 'live-open': {const id=liveRoomFromLink(data);if(!id)throw new Error(tr("Enter a room ID or complete Bilibili live-stream URL"));navigation.update({page:'live',liveRoomId:id,player:false,videoOpen:false,queueOpen:false});break;}
     case 'live-bounds': if(page==='live' && input?.id===liveRoomId)liveHost.bounds(input);break;
     case 'live-mute':liveHost.video.muted=!liveHost.video.muted;live.patch({muted:liveHost.video.muted});break;
     case 'live-toggle': live.toggle();break;
@@ -623,11 +625,11 @@ async function dispatch(action,data='') {
     case 'library-page': navigation.update({libraryPage:Number(data)||0},{replace:true});break;
     case 'library-setting': {const key=input?.key,value=input?.value;if(key==='sort' && SONG_SORTS.includes(value))preferences.sort=value;else if(key==='sortDescending')preferences.sortDescending=value==='true';else if(key==='libraryView')preferences.libraryView=value==='grid'?'grid':'list';else if(key==='librarySource' && ['all',...sources,'local'].includes(value))preferences.librarySource=value;else if(key==='libraryTag')preferences.libraryTag=String(value).slice(0,32);else if(key==='libraryOrder')preferences.libraryOrder=libraryOrder(String(value).split(','));else break;navigation.update({libraryPage:0},{replace:true});emit();persist();break;}
     case 'library-play': {const ids=libraryData().allIds;if(ids.length){if(data==='shuffle'){engine.setShuffleEnabled(true);engine.setRepeatMode('ALL');}await play(data==='shuffle'?ids[Math.floor(Math.random()*ids.length)]:ids[0],'library-view',ids);}break;}
-    case 'library-bulk': {if(input?.stamp!==libraryStamp())throw new Error('The page changed. Select the track again');const allowed=new Set(libraryData().allIds),ids=[...new Set(String(input.ids || '').split('\n'))].filter(id=>allowed.has(id)).slice(0,10000);if(!ids.length)break;if(input.kind==='playlist'){target='';menuContext='bulk';dialogText=ids.join('\n');dialog='playlist-add';emit();break;}if(input.kind==='remove' && playlistId){await playlistEditor.membership(playlistId,ids,true);}else if(input.kind==='queue'){if(decode(engine.queueIdsJson()).length+ids.length>LIMITS.tracks)throw new Error('Queue capacity is insufficient. Select fewer tracks');for(const id of ids)if(!engine.insertQueueTrack(id,false))throw new Error('Queue is full');++queueRevision;persist();}else if(input.kind==='favorite'){const owners=new Map(ids.map(id=>{const rev=(favoriteRevisions.get(id)||0)+1;favoriteRevisions.set(id,rev);return [id,rev];}));await store.favoriteTracks(ids);for(const id of ids){const row=records.get(id);if(row && favoriteRevisions.get(id)===owners.get(id)){row.favorite=true;engine.upsertMetadata(id,row.title,row.artist,row.durationMs,true);}}++libraryRevision;}else if(input.kind==='download'){for(const id of ids.slice(0,20))await cacheSong(id);}else break;emit();toastMessage(input.kind==='download' && ids.length>20?'Submitted the first 20 downloads. Add more after they finish':'Processed '+ids.length+' tracks');break;}
-    case 'playlist-sort-move': {if(input?.id!==playlistId || preferences.sort!=='custom' || preferences.sortDescending || libraryQuery || preferences.librarySource!=='all')throw new Error('Choose custom order and clear filters before reordering');await playlistEditor.move(input.id,input.songId,input.destinationId);break;}
+    case 'library-bulk': {if(input?.stamp!==libraryStamp())throw new Error(tr("The page changed. Select the track again"));const allowed=new Set(libraryData().allIds),ids=[...new Set(String(input.ids || '').split('\n'))].filter(id=>allowed.has(id)).slice(0,10000);if(!ids.length)break;if(input.kind==='playlist'){target='';menuContext='bulk';dialogText=ids.join('\n');dialog='playlist-add';emit();break;}if(input.kind==='remove' && playlistId){await playlistEditor.membership(playlistId,ids,true);}else if(input.kind==='queue'){if(decode(engine.queueIdsJson()).length+ids.length>LIMITS.tracks)throw new Error(tr("Queue capacity is insufficient. Select fewer tracks"));for(const id of ids)if(!engine.insertQueueTrack(id,false))throw new Error(tr("Queue is full"));++queueRevision;persist();}else if(input.kind==='favorite'){const owners=new Map(ids.map(id=>{const rev=(favoriteRevisions.get(id)||0)+1;favoriteRevisions.set(id,rev);return [id,rev];}));await store.favoriteTracks(ids);for(const id of ids){const row=records.get(id);if(row && favoriteRevisions.get(id)===owners.get(id)){row.favorite=true;engine.upsertMetadata(id,row.title,row.artist,row.durationMs,true);}}++libraryRevision;}else if(input.kind==='download'){for(const id of ids.slice(0,20))await cacheSong(id);}else break;emit();toastMessage(input.kind==='download' && ids.length>20?tr("Submitted the first 20 downloads. Add more after they finish"):tr("Processed ")+ids.length+tr(" tracks"));break;}
+    case 'playlist-sort-move': {if(input?.id!==playlistId || preferences.sort!=='custom' || preferences.sortDescending || libraryQuery || preferences.librarySource!=='all')throw new Error(tr("Choose custom order and clear filters before reordering"));await playlistEditor.move(input.id,input.songId,input.destinationId);break;}
     case 'pwa-later':webIntegration.dismiss();break;
     case 'pwa-install':if(!await webIntegration.install()){dialog='web-integration';emit();}break;
-    case 'notifications-enable':{const permission=await webIntegration.notifications();if(permission==='granted')toastMessage('Download notifications enabled');await store.write(['settings'],tx=>tx.objectStore('settings').put(permission==='granted','systemNotifications'));break;}
+    case 'notifications-enable':{const permission=await webIntegration.notifications();if(permission==='granted')toastMessage(tr("Download notifications enabled"));await store.write(['settings'],tx=>tx.objectStore('settings').put(permission==='granted','systemNotifications'));break;}
     case 'notifications-disable':webIntegration.disableNotifications();await store.write(['settings'],tx=>tx.objectStore('settings').put(false,'systemNotifications'));break;
     case 'search-query': query=data.slice(0,200);clearTimeout(searchTimer);++searchRevision;++sectionRevision;searchSections=[];trimRemote();for(const s of sources)platform.cancel('search:'+s);emit();if(searchTerm(query))searchTimer=setTimeout(()=>loadSections('search'),450);break;
     case 'search-composing':clearTimeout(searchTimer);++searchRevision;for(const id of sources)platform.cancel('search:'+id);break;
@@ -646,7 +648,7 @@ async function dispatch(action,data='') {
     case 'comments-more': if(commentState?.next)navigation.update({commentCursor:commentState.next});break;
     case 'comments-refresh': await commentPages.select({id:commentId,root:commentRoot,order:commentOrder,cursor:commentCursor},{force:true});break;
     case 'collection-link': dialog='collection-link';dialogText='';emit();break;
-    case 'collection-open': {const link=parseCollectionLink(input?.text || '',input?.source || 'qq');if(!link)throw new Error('Paste a complete playlist URL, or choose a platform and enter its playlist ID ID');navigation.update({page:'collection',collectionSource:link.source,collectionId:link.id,collectionPage:1,player:false,videoOpen:false,queueOpen:false});break;}
+    case 'collection-open': {const link=parseCollectionLink(input?.text || '',input?.source || 'qq');if(!link)throw new Error(tr("Paste a complete playlist URL, or choose a platform and enter its playlist ID ID"));navigation.update({page:'collection',collectionSource:link.source,collectionId:link.id,collectionPage:1,player:false,videoOpen:false,queueOpen:false});break;}
     case 'collection-page': navigation.update({collectionPage:Math.max(1,Math.min(500,Number(data)))},{replace:true});break;
     case 'collection-refresh': await collectionPages.select({source:collectionSource,id:collectionId,page:collectionPage},{force:true});break;
     case 'collection-import': await importCollection();break;
@@ -655,7 +657,7 @@ async function dispatch(action,data='') {
     case 'refresh-home': await loadSections('home',true);break;
     case 'refresh-source': await loadSections('home',true,data);break;
     case 'play': await play(input.id,input.context || '',undefined,{queueKey:input.queueKey || ''});break;
-    case 'play-group': {const ids=[...records.values()].filter(s=>input.kind==='albums'?(s.album || 'Unknown album')===input.name:s.artist===input.name).map(s=>s.id);if(ids.length)await play(ids[0],'',ids);break;}
+    case 'play-group': {const ids=[...records.values()].filter(s=>input.kind==='albums'?(s.album || tr("Unknown album"))===input.name:s.artist===input.name).map(s=>s.id);if(ids.length)await play(ids[0],'',ids);break;}
     case 'toggle': error='';playback.toggle();emit();break;
     case 'previous': error='';playback.previous();break;
     case 'next': error='';playback.next();break;
@@ -681,7 +683,7 @@ async function dispatch(action,data='') {
       const plan=planBilibiliSelection(biliState,engine.currentId(),input?.id,input?.group);
       dialog='';
       for(const row of plan.songs)if(!records.has(row.id))remote.set(row.id,row);
-      if(plan.same){for(const id of plan.ids){const row=track(id);if(!row || !engine.upsertMetadata(row.id,row.title,row.artist,row.durationMs,row.favorite))throw new Error('Library is full. Remove tracks first');}engine.setQueueIds(plan.ids.join('\n'));++queueRevision;queueMetadata.select(plan.ids);persist();emit();}
+      if(plan.same){for(const id of plan.ids){const row=track(id);if(!row || !engine.upsertMetadata(row.id,row.title,row.artist,row.durationMs,row.favorite))throw new Error(tr("Library is full. Remove tracks first"));}engine.setQueueIds(plan.ids.join('\n'));++queueRevision;queueMetadata.select(plan.ids);persist();emit();}
       else await play(plan.id,'bili-context',plan.ids);
       break;
     }
@@ -701,8 +703,8 @@ async function dispatch(action,data='') {
     case 'queue-play-next': {const result=editQueueEntry(engine,{...input,action:'next'},{active:dialog==='song-menu' && menuContext==='queue',key:targetQueueKey,id:target,locked:preferences.queueLocked});finishQueueEdit(result,playback.desiredPlaying);break;}
     case 'queue-remove': {const playing=playback.desiredPlaying,result=editQueueEntry(engine,{...input,action:'remove'},{active:dialog==='song-menu' && menuContext==='queue',key:targetQueueKey,id:target,locked:preferences.queueLocked});finishQueueEdit(result,playing);break;}
     case 'queue-dismiss': case 'queue-nudge': case 'queue-reorder': {const playing=playback.desiredPlaying,result=visibleQueueEdit({...input,action:action==='queue-dismiss'?'remove':action==='queue-nudge'?'move':'move-to',delta:Number(input?.delta)});finishQueueEdit(result,playing);break;}
-    case 'queue-next': case 'queue-add': {const id=data || target,revision=queueRevision,active=engine.currentQueueKey(),record=await ensureSaved(id);if(revision!==queueRevision || action==='queue-next'&&active!==engine.currentQueueKey())throw new Error('Queue changed. Select tracks to add again');if(!engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite) || !engine.insertQueueTrack(id,action==='queue-next'))throw new Error('Queue is full');++queueRevision;dialog='';emit();persist();toastMessage(action==='queue-next'?'Set to play next':'Added to queue');break;}
-    case 'queue-clear': if(queueOpen && !preferences.queueLocked){const removed=engine.clearOtherQueueEntries();if(removed){++queueRevision;queueStart=0;offerQueueUndo(`Cleared the other ${removed} tracks`);emit();persist()}}break;
+    case 'queue-next': case 'queue-add': {const id=data || target,revision=queueRevision,active=engine.currentQueueKey(),record=await ensureSaved(id);if(revision!==queueRevision || action==='queue-next'&&active!==engine.currentQueueKey())throw new Error(tr("Queue changed. Select tracks to add again"));if(!engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite) || !engine.insertQueueTrack(id,action==='queue-next'))throw new Error(tr("Queue is full"));++queueRevision;dialog='';emit();persist();toastMessage(action==='queue-next'?tr("Set to play next"):tr("Added to queue"));break;}
+    case 'queue-clear': if(queueOpen && !preferences.queueLocked){const removed=engine.clearOtherQueueEntries();if(removed){++queueRevision;queueStart=0;offerQueueUndo(tr("Cleared the other {0} tracks", removed));emit();persist()}}break;
     case 'queue-undo': if(queueOpen && !preferences.queueLocked){const before=engine.currentQueueKey(),playing=playback.desiredPlaying;if(engine.undoQueueEdit()){clearTimeout(queueUndoTimer);queueUndo='';++queueRevision;queueStart=Math.max(0,engine.currentQueueIndex()-120);++queueFocus;if(before!==engine.currentQueueKey() && engine.currentId())playback.switchTo(engine.currentId(),{play:playing});emit();persist()}}break;
     case 'queue-before': queueStart=Math.max(0,queueStart-240);emit();break;
     case 'queue-after': queueStart=Math.min(Math.max(0,engine.queueSize()-1),queueStart+240);emit();break;
@@ -711,9 +713,9 @@ async function dispatch(action,data='') {
     case 'import-folder': chooseFiles('music','',true,true);break;
     case 'artwork-import': target=data || target;chooseFiles('art','image/*');break;
     case 'lyrics-import': chooseFiles('lyrics','.lrc,text/plain');break;
-    case 'copy': toastMessage('Copying lyrics…');await clipboardWriter.write(data);toastMessage('Lyrics copied');break;
-    case 'content-copy': toastMessage('Copying…');await clipboardWriter.write(data);toastMessage('Copied');break;
-    case 'lyrics-export': download(new Blob([data],{type:'text/plain;charset=utf-8'}),`${track(target)?.title || 'Lyrics'}.lrc`);toastMessage('Lyrics export started');break;
+    case 'copy': toastMessage(tr("Copying lyrics…"));await clipboardWriter.write(data);toastMessage(tr("Lyrics copied"));break;
+    case 'content-copy': toastMessage(tr("Copying…"));await clipboardWriter.write(data);toastMessage(tr("Copied"));break;
+    case 'lyrics-export': download(new Blob([data],{type:'text/plain;charset=utf-8'}),`${track(target)?.title || tr("Lyrics")}.lrc`);toastMessage(tr("Lyrics export started"));break;
     case 'lyrics-edit': target=data || target || engine.currentId();dialog='lyrics-edit';dialogText=track(target)?.lyrics || '';emit();break;
     case 'lyric-source': dialog='lyric-source';target=engine.currentId();lyricSources.open(track(target));emit();break;
     case 'lyrics-source': if(dialog==='lyric-source')await lyricSources.select(data);break;
@@ -724,20 +726,20 @@ async function dispatch(action,data='') {
     case 'radio-query':navigation.update({radioQuery:data.slice(0,120)},{replace:true});break;
     case 'radio-refresh':await radios.load().catch(e=>{radioStorageError=e.message;});selectRadio(true);break;
     case 'radio-more':radioPages.more();break;
-    case 'radio-play':case 'radio-queue-play':{const station=findRadio(data);if(!station)throw new Error('Station metadata changed. Select it again');radioPages.cancelSelection();if(live?.active){await live.close({resume:false});liveHost.close();}if(videoOpen)navigation.update({videoOpen:false},{replace:true});const queue=action==='radio-queue-play'?radio.state.queue:(radioPages.state.items.filter(row=>row.uuid));dialog='';if(preferences.autoOpen)navigation.update({player:true});radio.open(station,{queue});emit();break;}
+    case 'radio-play':case 'radio-queue-play':{const station=findRadio(data);if(!station)throw new Error(tr("Station metadata changed. Select it again"));radioPages.cancelSelection();if(live?.active){await live.close({resume:false});liveHost.close();}if(videoOpen)navigation.update({videoOpen:false},{replace:true});const queue=action==='radio-queue-play'?radio.state.queue:(radioPages.state.items.filter(row=>row.uuid));dialog='';if(preferences.autoOpen)navigation.update({player:true});radio.open(station,{queue});emit();break;}
     case 'radio-qq-play':radioPages.chooseQq(data);break;
     case 'radio-toggle':radio.toggle();break;
     case 'radio-next':radio.change(1);break;
     case 'radio-previous':radio.change(-1);break;
     case 'radio-close':if(live?.active){await live.close({resume:false});liveHost.close();}await radio.close();if(!engine.currentId())navigation.close('player');emit();break;
-    case 'radio-favorite':{const station=findRadio(data);if(!station)throw new Error('Station metadata updated');await radios.toggle(station);toastMessage(radios.value.favorites.includes(station.uuid)?'Station saved to favorites':'Station removed from favorites');break;}
-    case 'radio-add':{if(radioAdding)return;const token=++radioAddVersion;radioAdding=true;radioAddError='';emit();try{const value=await platform.request('/api/radio-custom',{method:'POST',body:input});if(token!==radioAddVersion || dialog!=='radio-custom')return;await radios.toggle(value.station,true);if(token!==radioAddVersion)return;dialog='';navigation.update({page:'radio',radioScope:'favorites',radioQuery:'',player:false},{replace:true});toastMessage('Station saved');}catch(error){if(token===radioAddVersion)radioAddError=error.message;}finally{if(token===radioAddVersion){radioAdding=false;emit();}}break;}
+    case 'radio-favorite':{const station=findRadio(data);if(!station)throw new Error(tr("Station metadata updated"));await radios.toggle(station);toastMessage(radios.value.favorites.includes(station.uuid)?tr("Station saved to favorites"):tr("Station removed from favorites"));break;}
+    case 'radio-add':{if(radioAdding)return;const token=++radioAddVersion;radioAdding=true;radioAddError='';emit();try{const value=await platform.request('/api/radio-custom',{method:'POST',body:input});if(token!==radioAddVersion || dialog!=='radio-custom')return;await radios.toggle(value.station,true);if(token!==radioAddVersion)return;dialog='';navigation.update({page:'radio',radioScope:'favorites',radioQuery:'',player:false},{replace:true});toastMessage(tr("Station saved"));}catch(error){if(token===radioAddVersion)radioAddError=error.message;}finally{if(token===radioAddVersion){radioAdding=false;emit();}}break;}
     case 'statistics-open':navigation.update({page:'statistics',player:false,videoOpen:false,queueOpen:false});break;
     case 'statistics-period':navigation.update({statsPeriod:data,statsOffset:0},{replace:true});break;
     case 'statistics-offset':navigation.update({statsOffset:Number(data)},{replace:true});break;
     case 'statistics-refresh':playback?.listeningSample();await listening?.flush();selectStatistics(true);break;
-    case 'statistics-play':if(track(data))await play(data,'statistics');else toastMessage('Track is no longer in the library. Search again to play it');break;
-    case 'statistics-reset-confirm':dialog='';listening?.reset();await listeningStore.reset();listening?.begin(track(engine.currentId()));statisticsChanged('reset');toastMessage('Local listening statistics cleared');break;
+    case 'statistics-play':if(track(data))await play(data,'statistics');else toastMessage(tr("Track is no longer in the library. Search again to play it"));break;
+    case 'statistics-reset-confirm':dialog='';listening?.reset();await listeningStore.reset();listening?.begin(track(engine.currentId()));statisticsChanged('reset');toastMessage(tr("Local listening statistics cleared"));break;
     case 'notes-open': {const filter=notePages.current?.request || {query:'',category:'',page:0};navigation.update({page:'notes',notesQuery:filter.query,notesCategory:filter.category,notesPage:filter.page,player:false,videoOpen:false,queueOpen:false});break;}
     case 'notes-query': navigation.update({notesQuery:data.slice(0,128),notesPage:0},{replace:true});break;
     case 'notes-category': navigation.update({notesCategory:data.slice(0,32),notesPage:0},{replace:true});break;
@@ -745,10 +747,10 @@ async function dispatch(action,data='') {
     case 'notes-refresh': selectNotesRoute({force:true});break;
     case 'note-open': {if(!data)break;target=data;dialog='note-editor';await noteEditor.open(data,track(data));break;}
     case 'note-reload': if(input?.token===noteEditor.state.token){dialog='note-editor';await noteEditor.open(noteEditor.state.songId,track(noteEditor.state.songId));}break;
-    case 'note-save': {const token=input?.token;if(dialog==='note-editor' && await noteEditor.save(input) && noteEditor.state.token===token){dialog='';noteEditor.close();toastMessage('Music note saved locally');}break;}
+    case 'note-save': {const token=input?.token;if(dialog==='note-editor' && await noteEditor.save(input) && noteEditor.state.token===token){dialog='';noteEditor.close();toastMessage(tr("Music note saved locally"));}break;}
     case 'note-delete': if(data===noteEditor.state.token && noteEditor.state.exists){dialog='note-delete';emit();}break;
     case 'note-editor-return': if(data===noteEditor.state.token){dialog='note-editor';emit();}break;
-    case 'note-delete-confirm': if(dialog==='note-delete' && await noteEditor.remove(data) && noteEditor.state.token===data){dialog='';noteEditor.close();toastMessage('Music note deleted');}break;
+    case 'note-delete-confirm': if(dialog==='note-delete' && await noteEditor.remove(data) && noteEditor.state.token===data){dialog='';noteEditor.close();toastMessage(tr("Music note deleted"));}break;
     case 'metadata-open': dialog='metadata';{const song=track(target);dialogText=[song?.title,song?.artist,song?.album].join('\n')}emit();break;
     case 'dialog': recognition?.cancel();if(data==='accounts'){openAccounts();await loadAccountStates();break;}if(data==='lyrics-source')target=engine.currentId();dialog=data;if(data==='playlist-create')playlistCreateId='playlist-'+crypto.randomUUID();dialogText='';noteEditor?.close();emit();break;
     case 'dialog-close': recognition?.cancel();accountSession?.close();dialog='';dialogText='';pendingBackup=null;noteEditor?.close();emit();break;
@@ -767,7 +769,7 @@ async function dispatch(action,data='') {
     case 'recognition-page': recognition.filter(recognition.query,Number(data));break;
     case 'recognition-clear': if(dialog==='recognition' && !recognition.busy){dialog='recognition-clear';emit();}break;
     case 'recognition-clear-confirm': if(dialog==='recognition-clear'){await recognition.clear();dialog='recognition';emit();}break;
-    case 'recognition-play': {const song=recognition.find(data);if(!song)break;recognition.cancel();if(song.source==='local' && !records.has(song.id)){toastMessage('Original local file is missing. Reimport it to play');break;}if(!records.has(song.id))remote.set(song.id,song);dialog='';await play(song.id,'recognition',[song.id]);break;}
+    case 'recognition-play': {const song=recognition.find(data);if(!song)break;recognition.cancel();if(song.source==='local' && !records.has(song.id)){toastMessage(tr("Original local file is missing. Reimport it to play"));break;}if(!records.has(song.id))remote.set(song.id,song);dialog='';await play(song.id,'recognition',[song.id]);break;}
     case 'recognition-search': {const song=recognition.find(data);if(!song)break;recognition.cancel();dialog='';query=`${song.title} ${song.artist}`.slice(0,200);navigation.update({page:'search',player:false,queueOpen:false,videoOpen:false});searchKind='songs';source='all';collapsed.clear();clearTimeout(searchTimer);searchSections=[];await loadSections('search');break;}
     case 'audio-open': dialog='audio-settings';emit();break;
     case 'audio-devices': dialog='audio-devices';emit();await sound.output.refresh();break;
@@ -775,8 +777,8 @@ async function dispatch(action,data='') {
     case 'audio-device-select': await sound.output.select(data);break;
     case 'audio-setting': preferences.audioEffects=soundPatch(preferences.audioEffects,input);persist();await sound.configure(preferences.audioEffects);emit();break;
     case 'guide-seen': if(/^[a-z-]{1,50}$/.test(data)){preferences.guideSeen=[...new Set([...(preferences.guideSeen || []),data])].slice(-80);emit();persist();}break;
-    case 'guide-reset': preferences.guideSeen=[];preferences.guideEnabled=true;dialog='';emit();persist();toastMessage('Guides reset. They will appear when you open each page');break;
-    case 'setting': {let value=input.value;const key=input.key;if(['autoOpen','reduceMotion','recordListening','guideEnabled'].includes(key))value=value==='true';if(key==='theme' && !['system','light','dark'].includes(value))break;if(key==='searchPreference' && !sources.includes(value))break;if(key==='font' && !['sans','serif','wenkai','nunito'].includes(value))break;if(key==='font'){const revision=++fontRevision;toastMessage('Preparing font…');await loadOptionalFont(value);if(dialog!=='font' || revision!==fontRevision)break;}if(key==='motionPreset' && !['fast','slow'].includes(value))break;if(key==='lyricsSize')value=Math.max(18,Math.min(40,Number(value)||26));if(['font','motionPreset','lyricsSize','guideEnabled','autoOpen','reduceMotion','recordListening','theme','searchPreference'].includes(key))preferences[key]=value;if(key==='recordListening'){listening?.setEnabled(value,track(engine.currentId()));playback?.listeningSample(true);}emit();persist();break;}
+    case 'guide-reset': preferences.guideSeen=[];preferences.guideEnabled=true;dialog='';emit();persist();toastMessage(tr("Guides reset. They will appear when you open each page"));break;
+    case 'setting': {let value=input.value;const key=input.key;if(key==='language'){if(!['en','zh-CN'].includes(value))break;preferences.language=value;applyLanguage();emit();await persist(true);break;}if(['autoOpen','reduceMotion','recordListening','guideEnabled'].includes(key))value=value==='true';if(key==='theme' && !['system','light','dark'].includes(value))break;if(key==='searchPreference' && !sources.includes(value))break;if(key==='font' && !['sans','serif','wenkai','nunito'].includes(value))break;if(key==='font'){const revision=++fontRevision;toastMessage(tr("Preparing font…"));await loadOptionalFont(value);if(dialog!=='font' || revision!==fontRevision)break;}if(key==='motionPreset' && !['fast','slow'].includes(value))break;if(key==='lyricsSize')value=Math.max(18,Math.min(40,Number(value)||26));if(['font','motionPreset','lyricsSize','guideEnabled','autoOpen','reduceMotion','recordListening','theme','searchPreference'].includes(key))preferences[key]=value;if(key==='recordListening'){listening?.setEnabled(value,track(engine.currentId()));playback?.listeningSample(true);}emit();persist();break;}
     case 'volume': preferences.volume=Math.max(0,Math.min(100,Number(data)*100));sound.setVolume(preferences.volume/100);emit();persist();break;
     case 'playlist-open': if(data)navigation.update({page:'library',tab:'playlists',playlistId:data,libraryGroup:'',libraryQuery:'',libraryPage:0});else navigation.close('playlistId');break;
     case 'playlist-play': {const p=decode(engine.playlistJson(data));if(p?.trackIds.length)await play(p.trackIds[0],'playlist:'+data,p.trackIds);break;}
@@ -788,12 +790,12 @@ async function dispatch(action,data='') {
     case 'playlist-save': if(dialog==='playlist-edit' && input?.id===target){const owner=target;await playlistEditor.patch(owner,{name:input.name,description:input.description,tags:String(input.tags || '').split(/[,，\n]/),background:input.background,backgroundTrackId:input.backgroundTrackId,backgroundOpacity:Number(input.backgroundOpacity)});if(dialog==='playlist-edit' && target===owner)dialog='';emit();}break;
     case 'playlist-background-file': if(target)chooseFiles('playlist-art:'+target,'image/png,image/jpeg,image/webp');break;
     case 'playlist-create-add-open': if(dialog==='playlist-add'){pendingPlaylistTracks=menuContext==='bulk'?dialogText.split('\n').filter(id=>records.has(id)):[target];dialogText='';playlistCreateId='playlist-'+crypto.randomUUID();dialog='playlist-create-add';emit();}break;
-    case 'playlist-add': {const owner=target;const ids=menuContext==='bulk'?dialogText.split('\n').filter(id=>records.has(id)):[target];for(const id of ids)await ensureSaved(id);await playlistEditor.membership(data,ids);if(dialog==='playlist-add' && target===owner)dialog='';emit();toastMessage('Added to playlist');break;}
-    case 'playlist-remove-song': {const id=menuContext.slice(9);await playlistEditor.membership(id,[target],true);dialog='';emit();toastMessage('Removed from playlist');break;}
+    case 'playlist-add': {const owner=target;const ids=menuContext==='bulk'?dialogText.split('\n').filter(id=>records.has(id)):[target];for(const id of ids)await ensureSaved(id);await playlistEditor.membership(data,ids);if(dialog==='playlist-add' && target===owner)dialog='';emit();toastMessage(tr("Added to playlist"));break;}
+    case 'playlist-remove-song': {const id=menuContext.slice(9);await playlistEditor.membership(id,[target],true);dialog='';emit();toastMessage(tr("Removed from playlist"));break;}
     case 'dialog-save': {const savingDialog=dialog,savingTarget=target;
-      if(['playlist-create','playlist-create-add','playlist-rename'].includes(dialog)) {const id=dialog==='playlist-rename'?target:(playlistCreateId ||= 'playlist-'+crypto.randomUUID());if(dialog!=='playlist-rename' && playlistMetadata.size>=200)throw new Error('Maximum number of playlists: 200 playlists');const initial=dialog==='playlist-create-add'?[...pendingPlaylistTracks]:[];for(const trackId of initial)await ensureSaved(trackId);await playlistEditor.run(id,old=>({...old,id,name:data,trackIds:old?.trackIds || initial,createdAt:old?.createdAt || Date.now()}));pendingPlaylistTracks=[];}
+      if(['playlist-create','playlist-create-add','playlist-rename'].includes(dialog)) {const id=dialog==='playlist-rename'?target:(playlistCreateId ||= 'playlist-'+crypto.randomUUID());if(dialog!=='playlist-rename' && playlistMetadata.size>=200)throw new Error(tr("Maximum number of playlists: 200 playlists"));const initial=dialog==='playlist-create-add'?[...pendingPlaylistTracks]:[];for(const trackId of initial)await ensureSaved(trackId);await playlistEditor.run(id,old=>({...old,id,name:data,trackIds:old?.trackIds || initial,createdAt:old?.createdAt || Date.now()}));pendingPlaylistTracks=[];}
       else if(dialog==='lyrics-edit')await saveLyrics(target,data,true,'local');
-      else if(dialog==='metadata') {const [title,artist,album]=data.split('\n');if(!title?.trim())throw new Error('Track title cannot be empty');const record=await ensureSaved(target);const patch={title:title.trim().slice(0,2000),artist:(artist?.trim() || 'Unknown artist').slice(0,2000),album:(album?.trim() || '').slice(0,2000),creatorId:(artist?.trim() || 'Unknown artist')===record.artist?record.creatorId:''};await store.patchTrack(target,patch);Object.assign(record,patch);engine.upsertMetadata(target,record.title,record.artist,record.durationMs,record.favorite)}
+      else if(dialog==='metadata') {const [title,artist,album]=data.split('\n');if(!title?.trim())throw new Error(tr("Track title cannot be empty"));const record=await ensureSaved(target);const patch={title:title.trim().slice(0,2000),artist:(artist?.trim() || tr("Unknown artist")).slice(0,2000),album:(album?.trim() || '').slice(0,2000),creatorId:(artist?.trim() || tr("Unknown artist"))===record.artist?record.creatorId:''};await store.patchTrack(target,patch);Object.assign(record,patch);engine.upsertMetadata(target,record.title,record.artist,record.durationMs,record.favorite)}
       else if(dialog==='live-link') {dialog='';await dispatch('live-open',data);emit();return;}
       else if(dialog==='account-connect') {await changeAccount(target,data);return;}
       ++libraryRevision;++playlistRevision;if(dialog===savingDialog && target===savingTarget)dialog='';emit();break;
@@ -814,7 +816,7 @@ async function dispatch(action,data='') {
       await mediaCache?.cancel(data);const current=engine.currentId()===data;const playing=playback.desiredPlaying;queueMetadata.select(decode(engine.queueIdsJson()).filter(id=>id!==data));await savingTracks.get(data)?.catch(()=>{});await store.remove(data);records.delete(data);remote.delete(data);engine.removeTrack(data);for(const [id,p] of playlistMetadata)if(p.backgroundTrackId===data)playlistMetadata.set(id,{...p,background:'none',backgroundTrackId:''});++playlistRevision;invalidateCover(data);
       ++libraryRevision;++queueRevision;
       if(current){if(engine.currentId())playback.switchTo(engine.currentId(),{play:playing});else{playback.stop();navigation.update({player:false},{replace:true})}}
-      dialog='';emit();persist();toastMessage('Removed from library');break;
+      dialog='';emit();persist();toastMessage(tr("Removed from library"));break;
     }
     case 'retry-play': error='';playback.retry();emit();break;
     case 'cache': await cacheSong(data);break;
@@ -824,21 +826,21 @@ async function dispatch(action,data='') {
     case 'cache-page': navigation.update({cachePage:Math.max(0,Math.min(Math.max(0,Math.ceil(cacheRows().length/CACHE_LIMITS.pageSize)-1),Number(data)||0))},{replace:true});break;
     case 'cache-refresh': await mediaCache.refresh();break;
     case 'cache-cancel': await mediaCache.cancel(data);break;
-    case 'cache-cancel-all': await mediaCache.cancelAll();toastMessage('Current download queue cancelled');break;
+    case 'cache-cancel-all': await mediaCache.cancelAll();toastMessage(tr("Current download queue cancelled"));break;
     case 'cache-retry-failed': for(const job of mediaCache.tasks.filter(row=>row.status==='error').slice(0,20))cacheSong(job.id);break;
     case 'cache-retry': cacheSong(data);break;
-    case 'cache-limit': {const value=Number(data);if(!CACHE_BUDGETS.includes(value))break;if(mediaCache.info.cleaning)throw new Error('Cleanup is running. Adjust capacity later');dialog='';preferences.cacheLimitMb=value;if(value===0)preferences.autoCache=false;mediaCache.resetAutomatic();emit();persist();await mediaCache.maintain();break;}
-    case 'cache-auto': {if(data==='true' && preferences.cacheLimitMb===0)throw new Error('Set an automatic cache limit first');preferences.autoCache=data==='true';mediaCache.resetAutomatic();mediaCache.playback(engine.currentId(),playback.status==='playing');emit();persist();break;}
+    case 'cache-limit': {const value=Number(data);if(!CACHE_BUDGETS.includes(value))break;if(mediaCache.info.cleaning)throw new Error(tr("Cleanup is running. Adjust capacity later"));dialog='';preferences.cacheLimitMb=value;if(value===0)preferences.autoCache=false;mediaCache.resetAutomatic();emit();persist();await mediaCache.maintain();break;}
+    case 'cache-auto': {if(data==='true' && preferences.cacheLimitMb===0)throw new Error(tr("Set an automatic cache limit first"));preferences.autoCache=data==='true';mediaCache.resetAutomatic();mediaCache.playback(engine.currentId(),playback.status==='playing');emit();persist();break;}
     case 'cache-keep-favorites': preferences.cacheKeepFavorites=data==='true';emit();persist();await mediaCache.maintain();break;
     case 'cache-pressure-ack': mediaCache.acknowledge(data);break;
     case 'cache-clean-open': target=data || 'automatic';dialog='cache-clean';emit();break;
-    case 'cache-clean-confirm': {if(dialog!=='cache-clean' || target!==data)break;const owner=dialogFeedback.revision;const result=await mediaCache.clean(data==='automatic'?'':data);if(dialog==='cache-clean' && target===data && dialogFeedback.revision===owner)dialog='';emit();toastMessage(result.blocked?'Available cache cleared. Current, next, and retained tracks are protected':`Freed ${(result.freedBytes/1048576).toFixed(1)} MB，Lyrics and artwork are kept`);break;}
-    case 'cache-catalog-clean': await store.clearCatalog();toastMessage('Search and recommendation cache cleared');break;
+    case 'cache-clean-confirm': {if(dialog!=='cache-clean' || target!==data)break;const owner=dialogFeedback.revision;const result=await mediaCache.clean(data==='automatic'?'':data);if(dialog==='cache-clean' && target===data && dialogFeedback.revision===owner)dialog='';emit();toastMessage(result.blocked?tr("Available cache cleared. Current, next, and retained tracks are protected"):tr("Freed {0} MB，Lyrics and artwork are kept", (result.freedBytes/1048576).toFixed(1)));break;}
+    case 'cache-catalog-clean': await store.clearCatalog();toastMessage(tr("Search and recommendation cache cleared"));break;
     case 'backup-export': await exportBackup();break;
     case 'backup-import': chooseFiles('backup','.tinglan,application/x-tinglan-backup');break;
     case 'backup-restore': await restoreBackup();break;
     case 'cancel-backup': ++backupRevision;backups.close();busy=false;pendingBackup=null;dialog='';message='';emit();break;
-    case 'licenses': {const response=await fetch('./THIRD_PARTY_NOTICES.txt');download(new Blob([await response.text()],{type:'text/plain'}),'Tinglan-Open-source licenses.txt');break;}
+    case 'licenses': {const response=await fetch('./THIRD_PARTY_NOTICES.txt');download(new Blob([await response.text()],{type:'text/plain'}),tr("Tinglan-Open-source licenses.txt"));break;}
   }
 }
 function loadBiliContext(force=false){const current=track(engine?.currentId()),id=current?.source==='bili'?parseBilibiliId(current.remoteId):null;if(id)biliPages?.select({id:'bili-'+id.bvid},{force});else{biliPages?.cancel();biliState=null;++biliRevision;}}
@@ -846,7 +848,7 @@ function openVideo(){const id=engine.currentId();if(!video || track(id)?.source!
 function openLive(resetBounds=true){if(!live)return;if(resetBounds)liveHost.open();live.open(liveRoomId,preferences.liveQuality || 80);}
 function liveChanged(state) {
   if(live?.active && navigator.mediaSession){navigator.mediaSession.playbackState=state.status==='playing'?'playing':'paused';
-    const key=state.room?.roomId+'|'+state.room?.title;if(state.room && key!==lastLiveMetadata && globalThis.MediaMetadata){lastLiveMetadata=key;navigator.mediaSession.metadata=new MediaMetadata({title:state.room.title,artist:state.room.creatorName,album:'Tinglan · Bilibili Live'});try{navigator.mediaSession.setPositionState?.();}catch{}}
+    const key=state.room?.roomId+'|'+state.room?.title;if(state.room && key!==lastLiveMetadata && globalThis.MediaMetadata){lastLiveMetadata=key;navigator.mediaSession.metadata=new MediaMetadata({title:state.room.title,artist:state.room.creatorName,album:tr("Tinglan · Bilibili Live")});try{navigator.mediaSession.setPositionState?.();}catch{}}
   }else lastLiveMetadata='';emit();
 }
 function presenceSnapshot() {
@@ -881,7 +883,7 @@ async function loadRadioPage(request,offset,{force=false,signal}={}) {
   const generation=platform.generation,key=request.scope==='qq'?`qq-radios|${platform.accountRevision}`:`radio-directory|${request.scope}|${request.query.trim().toLowerCase()}|${offset}`;
   const cached=await store.read('catalog',key).catch(()=>null);signal?.throwIfAborted();
   if(cached && !force)return cached;
-  try{const value=await platform.request(request.scope==='qq'?'/api/qq-radios':'/api/radio-directory?'+new URLSearchParams({scope:request.scope,q:request.query,offset,force:force?'1':'0'}),{signal,timeoutMs:30000});signal?.throwIfAborted();if(request.scope==='qq' && generation!==platform.generation)throw new DOMException('Account changed','AbortError');if(request.scope!=='qq')await radios.remember(value.stations);signal?.throwIfAborted();await store.cacheCatalog(key,value).catch(()=>{});return value;}catch(error){signal?.throwIfAborted();if(request.scope==='qq' && generation!==platform.generation)throw new DOMException('Account changed','AbortError');if(cached)return {...cached,warning:'Connection lost. Showing previously saved stations'};throw error;}
+  try{const value=await platform.request(request.scope==='qq'?'/api/qq-radios':'/api/radio-directory?'+new URLSearchParams({scope:request.scope,q:request.query,offset,force:force?'1':'0'}),{signal,timeoutMs:30000});signal?.throwIfAborted();if(request.scope==='qq' && generation!==platform.generation)throw new DOMException('Account changed','AbortError');if(request.scope!=='qq')await radios.remember(value.stations);signal?.throwIfAborted();await store.cacheCatalog(key,value).catch(()=>{});return value;}catch(error){signal?.throwIfAborted();if(request.scope==='qq' && generation!==platform.generation)throw new DOMException('Account changed','AbortError');if(cached)return {...cached,warning:tr("Connection lost. Showing previously saved stations")};throw error;}
 }
 function selectRadio(force=false,debounce=false) {
   clearTimeout(radioTimer);radioTimer=null;
@@ -906,7 +908,7 @@ function connectStatistics() {
 }
 function notesSnapshot() {
   const info=page==='notes'?notePages?.forRequest(notesRequest()):null;
-  return {notesInfo:info?{...info,items:undefined,categories:undefined,request:undefined,query:notesQuery,category:notesCategory,loading:info.loading || notesDebouncing}:null,noteItems:info?cachedData('notes',`${JSON.stringify(notesRequest())}|${notesRevision}|${libraryRevision}`,()=>info.items.map(row=>{const song=track(row.songId);return {...notePreview(row),source:song?.source || 'local',hasArtwork:!!(song?.hasArtwork || song?.artworkUrl),dateLabel:new Date(row.updatedAt).toLocaleDateString('en-US')};})):empty,noteCategories:info?.categories.length?info.categories:empty};
+  return {notesInfo:info?{...info,items:undefined,categories:undefined,request:undefined,query:notesQuery,category:notesCategory,loading:info.loading || notesDebouncing}:null,noteItems:info?cachedData('notes',`${JSON.stringify(notesRequest())}|${notesRevision}|${libraryRevision}`,()=>info.items.map(row=>{const song=track(row.songId);return {...notePreview(row),source:song?.source || 'local',hasArtwork:!!(song?.hasArtwork || song?.artworkUrl),dateLabel:new Date(row.updatedAt).toLocaleDateString(currentLanguage())};})):empty,noteCategories:info?.categories.length?info.categories:empty};
 }
 function selectNotesRoute({force=false,debounce=false}={}) {
   clearTimeout(notesTimer);notesDebouncing=false;
@@ -928,7 +930,7 @@ globalThis.tinglanDispatch=(action,data)=>{
   Promise.resolve(dispatch(action,data)).catch(failure=>{
     console.warn('Interaction failed',action,failure.name,String(failure.stack || '').split('\n').slice(1,5).join('\n'));
     dialogFeedback.sync(dialog,target);const feedback=dialogFeedback.report(ticket,failure.message);
-    if(feedback==='toast')toastMessage(failure.message || 'Action incomplete. Retry');else if(feedback==='dialog'){toast='';clearTimeout(toastTimer);}
+    if(feedback==='toast')toastMessage(failure.message || tr("Action incomplete. Retry"));else if(feedback==='dialog'){toast='';clearTimeout(toastTimer);}
     if(feedback!=='obsolete' && dialog==='backup-progress'){busy=false;dialog='';}emit();
   });
 };
@@ -963,7 +965,7 @@ async function start() {
   });
   const mediaStore={read:(...args)=>store.read(...args),diagnose:(url,signal)=>platform.mediaState(url,signal),sourceFor:async(id,signal)=>{const local=await store.read('media',id);if(local instanceof Blob){mediaCache?.touch(id);return local;}const value=track(id);if(value?.source && value.source!=='local'){if(value.cached)await mediaCache?.missing(id);signal?.throwIfAborted();return platform.source(id,signal);}return local}};
   statisticsPages=new ListeningPages(listeningStore,statisticsWorker,emit);
-  listening=new ListeningRecorder(row=>listeningStore.save(row),{changed:()=>{statsWarning='';statisticsChanged();},error:error=>{statsWarning=error.message || 'Listening statistics were not saved';emit();}});
+  listening=new ListeningRecorder(row=>listeningStore.save(row),{changed:()=>{statsWarning='';statisticsChanged();},error:error=>{statsWarning=error.message || tr("Listening statistics were not saved");emit();}});
   listening.enabled=preferences.recordListening!==false;connectStatistics();
   playback=new BrowserPlayback(engine,mediaStore,{
     listening:(sample,options)=>{if(sample.active && !listening.current)listening.begin(track(sample.id));listening.observe(sample,options)},listeningBegin:value=>listening.begin(value),listeningEnd:()=>listening.finish(),listeningFlush:()=>listening.flush().catch(()=>{}),
@@ -976,12 +978,12 @@ async function start() {
   });
   mediaCache=new MediaCache({store,record:track,ensure:ensureSaved,source:(id,signal)=>platform.cacheSource(id,signal),revoke:path=>platform.request('/api/cache-revoke',{method:'POST',body:{path},timeoutMs:3000}),lyrics:(id,signal,row)=>platform.lyrics(id,signal,'platform',row),resize:resizeArtwork,preferences:()=>preferences,protectedIds:cacheProtected,
     estimate:()=>navigator.storage?.estimate?.() || Promise.resolve({}),visible:()=>!document.hidden && !busy && !accountChanging,networkAllowed:()=>!navigator.connection?.saveData && !['slow-2g','2g'].includes(navigator.connection?.effectiveType),
-    artwork:async(id,signal)=>{const response=await fetch('/api/artwork?id='+encodeURIComponent(id),{signal,credentials:'same-origin'});if(!response.ok)throw new Error('No artwork available');return response.blob();},
+    artwork:async(id,signal)=>{const response=await fetch('/api/artwork?id='+encodeURIComponent(id),{signal,credentials:'same-origin'});if(!response.ok)throw new Error(tr("No artwork available"));return response.blob();},
     committed:applyCacheUpdates,changed:()=>{++cacheTasksRevision;emit();}});
   mediaCache.maintain().catch(()=>{});mediaCache.startBackground(navigator.serviceWorker,()=>webIntegration.view().notifyEnabled).catch(()=>{});
   navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='tinglan-notification-route' && event.data.route==='#cache')navigation.update({page:'cache',player:false,queueOpen:false});});
   const radioAudio=document.createElement('audio');radioAudio.id='tinglan-radio-audio';radioAudio.preload='none';radioAudio.setAttribute('aria-hidden','true');document.body.append(radioAudio);
-  radio=new RadioPlayback({audio:radioAudio,music:playback,source:async(station,signal,{count})=>{const value=await platform.request('/api/radio-source',{method:'POST',body:{station,countListen:count},signal});try{if(value.hls)hlsModule ||=await import('./hls-adapter.mjs');const response=await fetch(value.url,{method:'HEAD',signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])});if(!response.ok)throw new Error(response.status===401?'Station access denied. Choose another station':'Station is temporarily unreachable');return value;}catch(error){platform.request('/api/radio-revoke',{method:'POST',body:{path:value.url}}).catch(()=>{});throw error;}},attachHls:(...args)=>hlsModule.attachLiveHls(...args),revoke:path=>platform.request('/api/radio-revoke',{method:'POST',body:{path}}),recent:station=>radios.remember([station],{recent:station.uuid}),changed:state=>{++radioRevision;if(ready)persist();if(state.active && !live?.active && navigator.mediaSession){navigator.mediaSession.playbackState=state.status==='playing'?'playing':'paused';radio?.metadata();}emit();}});
+  radio=new RadioPlayback({audio:radioAudio,music:playback,source:async(station,signal,{count})=>{const value=await platform.request('/api/radio-source',{method:'POST',body:{station,countListen:count},signal});try{if(value.hls)hlsModule ||=await import('./hls-adapter.mjs');const response=await fetch(value.url,{method:'HEAD',signal:AbortSignal.any([signal,AbortSignal.timeout(15000)])});if(!response.ok)throw new Error(response.status===401?tr("Station access denied. Choose another station"):tr("Station is temporarily unreachable"));return value;}catch(error){platform.request('/api/radio-revoke',{method:'POST',body:{path:value.url}}).catch(()=>{});throw error;}},attachHls:(...args)=>hlsModule.attachLiveHls(...args),revoke:path=>platform.request('/api/radio-revoke',{method:'POST',body:{path}}),recent:station=>radios.remember([station],{recent:station.uuid}),changed:state=>{++radioRevision;if(ready)persist();if(state.active && !live?.active && navigator.mediaSession){navigator.mediaSession.playbackState=state.status==='playing'?'playing':'paused';radio?.metadata();}emit();}});
   radioPages=new RadioPages({library:radios,load:loadRadioPage,loadTracks:(id,{signal})=>platform.request('/api/qq-radio-tracks?'+new URLSearchParams({id}),{signal}),changed:state=>{++radioRevision;registerImages(state);emit();},selected:async(id,songs,guard)=>{if(!guard())return;for(const song of songs)if(!records.has(song.id))remote.set(song.id,song);await play(songs[0].id,'qq-radio:'+id,songs.map(row=>row.id),{guard});}});
   const liveMusic={get audio(){return radio.active?radio.audio:playback.audio;},suspend:()=>radio.active?{kind:'radio',token:radio.suspend()}:{kind:'music',token:playback.suspend()},resume:(owner,options)=>owner?.kind==='radio'?radio.resume(owner.token,options):playback.resume(owner?.token,options)};
   videoHost=createVideoHost(()=>ui.mountVideoControls(),fullscreen=>video?.patch({fullscreen}));
@@ -992,7 +994,7 @@ async function start() {
   sound=new BrowserSound([playback.audio,radioAudio,liveHost.video],preferences.audioEffects,{changed:emit});
   const pauseForAnalysis=()=>{++mediaEpoch;radioPages?.cancelSelection();playback.pause();radio?.pause();live?.pause();};
   const localIndexStore=new LocalIndexStore(store);localMatcher=new LocalIndexMatcher(localIndexStore);localIndexManager=new LocalIndexManager(localIndexStore,{changed:emit,canBuild:()=>!recognition?.busy,decoder:new LocalIndexDecoder({beforeCapture:pauseForAnalysis})});
-  recognition=new MusicRecognition({capture:new BrowserRecognitionCapture(),fingerprint:new BrowserFingerprint(),history:new RecognitionHistory(store),mode:preferences.recognitionMode,localMatch:(pcm,options)=>localMatcher.match(pcm,options),match:(fingerprint,signal)=>platform.request('/api/recognition',{method:'POST',body:{fingerprint,duration:6},signal}),changed:emit,prepare:()=>{localIndexManager.cancel('Recognition started. Indexing paused');pauseForAnalysis();},remember:song=>{if(song.source!=='local' && !records.has(song.id))remote.set(song.id,song);}});
+  recognition=new MusicRecognition({capture:new BrowserRecognitionCapture(),fingerprint:new BrowserFingerprint(),history:new RecognitionHistory(store),mode:preferences.recognitionMode,localMatch:(pcm,options)=>localMatcher.match(pcm,options),match:(fingerprint,signal)=>platform.request('/api/recognition',{method:'POST',body:{fingerprint,duration:6},signal}),changed:emit,prepare:()=>{localIndexManager.cancel(tr("Recognition started. Indexing paused"));pauseForAnalysis();},remember:song=>{if(song.source!=='local' && !records.has(song.id))remote.set(song.id,song);}});
   const beforePlay=element=>{recognition?.cancel();localIndexManager?.playbackIntent();return sound.prepare(element);};playback.beforePlay=beforePlay;radio.beforePlay=beforePlay;live.beforePlay=beforePlay;
   playback.mediaDelegate=(action)=>{
     sound.gesture();if(!live.active && radio.active){if(action==='play')radio.play();else if(action==='pause')radio.pause();else if(action==='nexttrack' || action==='previoustrack')radio.change(action==='nexttrack'?1:-1);return true;}if(!live.active)return false;if(action==='play')live.play();else if(action==='pause')live.pause();else if(action==='nexttrack' || action==='previoustrack')globalThis.tinglanDispatch(action==='nexttrack'?'next':'previous','');return true;};
@@ -1009,17 +1011,17 @@ async function start() {
   dynamicPages=new ContentPages(async(request,options)=>{const value=await platform.activityDetail(request,options);return {...value,songs:[value.activity?.song,value.activity?.original?.song].filter(Boolean)};},state=>{dynamicState=state;++dynamicRevision;registerImages(state);for(const song of state.songs)if(!records.has(song.id))remote.set(song.id,song);trimRemote();emit();},{limit:12});
   followingPages=new ActivityFeed((...args)=>platform.followings(...args),state=>{followingState=state;++followingRevision;registerImages(state);emit();},{limit:1});
   accountSession=new AccountSession({platform,encode:async url=>(await import('./login-qr.mjs')).loginQrRows(url),deliverImage:deliverLoginImage,hidden:()=>document.hidden,changed:emit,
-    connected:async(source,value)=>{accountReader.accept(value);accountError='';emit();await resetPlatformContent();toastMessage(`${names[source]} Session connected`);}});
+    connected:async(source,value)=>{accountReader.accept(value);accountError='';emit();await resetPlatformContent();toastMessage(tr("{0} Session connected", names[source]));}});
   videoActions=new VideoActions({platform,changed:emit});
   deviceId=await store.read('settings','handoff-device-id').catch(()=>null);
   if(typeof deviceId!=='string' || !/^[a-f0-9-]{36}$/.test(deviceId)){deviceId=crypto.randomUUID();await store.write(['settings'],tx=>tx.objectStore('settings').put(deviceId,'handoff-device-id')).catch(()=>{});}
   webdav=new WebDavClient({platform,deviceId,changed:emit,capture:handoffOwner,outgoing:outgoingHandoff,prepare:prepareHandoff,continueHere:continueHandoff,
     published:(_snapshot,owner)=>{if(!handoffStillOwned(owner))return false;++mediaEpoch;playback.pause();persist();return true;}});
   lan=new LanTransferClient({platform,changed:emit,encode:async url=>(await import('./login-qr.mjs')).loginQrRows(url),importFile:async(file,options)=>{
-    if(busy || importReservation || accountChanging)throw new Error('A task is running. Retry importing on the receiver page later');
+    if(busy || importReservation || accountChanging)throw new Error(tr("A task is running. Retry importing on the receiver page later"));
     await importLanAudio(file,options,{records,store,parse:file=>metadata.run('metadata',file),artwork:resizeArtwork,beforeCommit:record=>{
-      if(busy || importReservation || accountChanging)throw new Error('A task is running. Retry importing on the receiver page later');
-      trimRemote();if(!engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite))throw new Error('Library and queue capacity is insufficient. Remove unwanted content');return ()=>engine.removeTrack(record.id);
+      if(busy || importReservation || accountChanging)throw new Error(tr("A task is running. Retry importing on the receiver page later"));
+      trimRemote();if(!engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite))throw new Error(tr("Library and queue capacity is insufficient. Remove unwanted content"));return ()=>engine.removeTrack(record.id);
     },upsert:record=>{engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite);if(record.lyrics)engine.setLyrics(record.id,record.lyrics);},changed:()=>{++libraryRevision;emit();}});
     await updateStorage();
   }});
@@ -1032,4 +1034,4 @@ async function start() {
   updateStorage();loadSections('home');
 
 }
-start().catch(failure=>{error=failure.message || 'Unable to start the application';if(ui){document.getElementById('boot-canvas')?.remove();emit();}else globalThis.tinglanBootError?.(error)});
+start().catch(failure=>{error=failure.message || tr("Unable to start the application");if(ui){document.getElementById('boot-canvas')?.remove();emit();}else globalThis.tinglanBootError?.(error)});

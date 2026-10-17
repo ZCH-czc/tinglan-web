@@ -1,7 +1,7 @@
 {
   "sourceCommit": "ab7a1371ee4e518f1bef02625a117250f6e6a3c1",
   "sourceVersion": "0.31.0",
-  "standaloneVersion": "0.31.1",
+  "standaloneVersion": "0.31.2",
   "sharedPolicies": [
     "lyrics/LyricsLineInteraction.kt",
     "lyrics/LyricsRefreshPolicy.kt",

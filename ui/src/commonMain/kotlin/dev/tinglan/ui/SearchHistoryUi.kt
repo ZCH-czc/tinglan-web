@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
                     Row(Modifier.heightIn(min=52.dp).padding(start=14.dp,end=4.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Glyph("clock",Modifier.size(18.dp),MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(term,Modifier.weight(1f),maxLines=1,overflow=TextOverflow.Ellipsis,style=MaterialTheme.typography.bodyMedium)
-                        Action("close","Remove search entry: $term",color=MaterialTheme.colorScheme.onSurfaceVariant){command("search-history-remove",term)}
+                        Action("close",tr("Remove search entry: {0}", term),color=MaterialTheme.colorScheme.onSurfaceVariant){command("search-history-remove",term)}
                     }
                 }}
                 repeat(columns-row.size){Spacer(Modifier.weight(1f))}

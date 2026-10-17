@@ -31,7 +31,7 @@ test('transient metadata release protects saved entries, playback queue and save
 test('production artifact is an actual Wasm binary and exported Kotlin runs', async () => {
   const bytes = await readFile(new URL('../build/dist/engine/tinglan-web-core.wasm', import.meta.url));
   assert.deepEqual(Array.from(bytes.subarray(0, 4)), [0, 97, 115, 109]);
-  assert.ok(WebAssembly.validate(bytes)); assert.equal(engine.engineVersion(), '0.31.1');
+  assert.ok(WebAssembly.validate(bytes)); assert.equal(engine.engineVersion(), '0.31.2');
 });
 test('Wasm queue survives 10000 rapid next/previous pairs', () => {
   populate();

@@ -24,7 +24,7 @@ internal fun roomForCreator(id:String,source:String="bili"):String {
     val live=roomId.isNotEmpty()
     val color=MaterialTheme.colorScheme.primary
     val pulse=if(live && model.presenceAnimating && !model.reduced) rememberInfiniteTransition(label="live-author").animateFloat(0f,1f,infiniteRepeatable(tween(1700,easing=LinearEasing)),label="live-wave") else remember {mutableStateOf(0f)}
-    Box(Modifier.size(size+10.dp).clip(CircleShape).clickable(enabled=live || onAuthor!=null) {if(live)command("live-open",roomId)else onAuthor?.invoke()}.semantics {contentDescription=if(live)"${song.title} Live now. Open the avatar to watch" else "${song.title} avatar"},contentAlignment=Alignment.Center) {
+    Box(Modifier.size(size+10.dp).clip(CircleShape).clickable(enabled=live || onAuthor!=null) {if(live)command("live-open",roomId)else onAuthor?.invoke()}.semantics {contentDescription=if(live)tr("{0} Live now. Open the avatar to watch", song.title) else tr("{0} avatar", song.title)},contentAlignment=Alignment.Center) {
         if(live)Canvas(Modifier.matchParentSize()) {
             val phase=pulse.value
             drawCircle(color.copy(alpha=.7f),radius=(this.size.minDimension-8.dp.toPx())/2,style=Stroke(1.4.dp.toPx()))
@@ -40,10 +40,10 @@ internal fun roomForCreator(id:String,source:String="bili"):String {
             LiveCreatorAvatar(Song(creator.avatarKey,creator.name,"",cover=creator.avatarKey.isNotEmpty(),source="bili"),54.dp,creator.roomId)
             Column(Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).clickable {command("creator-direct",payload("id" to creator.id,"source" to "bili"))}.padding(vertical=4.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
                 Text(creator.name,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis)
-                Text(creator.title.ifEmpty {"Live now"},style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=2,overflow=TextOverflow.Ellipsis)
-                Text("Live · Open the avatar to watch",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.primary)
+                Text(creator.title.ifEmpty {tr("Live now")},style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=2,overflow=TextOverflow.Ellipsis)
+                Text(tr("Live · Open the avatar to watch"),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.primary)
             }
-            Action("play","Watch ${creator.name} live stream") {command("live-open",creator.roomId)}
+            Action("play",tr("Watch {0} live stream", creator.name)) {command("live-open",creator.roomId)}
         }
     }
 }
@@ -51,8 +51,8 @@ internal fun roomForCreator(id:String,source:String="bili"):String {
 @Composable internal fun PresenceStatus(info:PresenceInfo,author:Boolean=false) {
     if(info.loading)Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         CircularProgressIndicator(Modifier.size(14.dp),strokeWidth=1.5.dp)
-        Text("Checking live status…",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(tr("Checking live status…"),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
     }
-    if(info.warning.isNotBlank())TextButton(onClick={command("presence-refresh")},enabled=!info.loading) {Text("${info.warning} · Retry",style=MaterialTheme.typography.bodySmall)}
-    else if(info.fetchedAt>0 && !info.loading)Text(if(author && info.liveRoomId.isEmpty())if(info.known)"Offline · Refresh to check again" else "Live status unavailable" else "Showing previous live status · Refresh to update",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    if(info.warning.isNotBlank())TextButton(onClick={command("presence-refresh")},enabled=!info.loading) {Text(tr("{0} · Retry", trMessage(info.warning)),style=MaterialTheme.typography.bodySmall)}
+    else if(info.fetchedAt>0 && !info.loading)Text(if(author && info.liveRoomId.isEmpty())if(info.known)tr("Offline · Refresh to check again") else tr("Live status unavailable") else tr("Showing previous live status · Refresh to update"),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
 }

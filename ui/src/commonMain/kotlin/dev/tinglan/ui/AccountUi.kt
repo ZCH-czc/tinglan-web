@@ -104,7 +104,7 @@ private fun scanInstruction(id:String)=if(id=="qq")"Use the mobile QQ app to sca
     TinglanAlertDialog(onDismissRequest=close,title={Text(title)},text={Column(Modifier.fillMaxWidth().heightIn(max=500.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(14.dp)){
         when(kind){
             "account-connect"->{
-                Text("Paste only your own account’s Cookie. The session is used only by this local companion and is excluded from music backups.",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Paste only your own account's Cookie. The session is used only by this local companion and is excluded from music backups.",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 TextField(text,{if(it.text.length<=12000)text=it},label={Text("Your own account Cookie")},modifier=Modifier.fillMaxWidth().heightIn(min=140.dp,max=260.dp),visualTransformation=if(reveal)VisualTransformation.None else PasswordVisualTransformation(),shape=RoundedCornerShape(16.dp))
                 Row(verticalAlignment=Alignment.CenterVertically){Checkbox(checked=reveal,onCheckedChange={reveal=it});Text("Show session contents",style=MaterialTheme.typography.bodySmall)}
                 Text("Verify the account after saving. Access is determined by the platform.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)

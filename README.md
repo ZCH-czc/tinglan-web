@@ -1,5 +1,7 @@
 # Tinglan Web
 
+[Open the Web app](https://zch-czc.github.io/tinglan-web/) · [Build and deployment](https://github.com/ZCH-czc/tinglan-web/actions/workflows/pages.yml)
+
 A local-first music application built with Kotlin/Wasm, Compose Multiplatform,
 and Skia. Its interface includes a music library, playlists, synchronized lyrics,
 playback queue, offline storage, and optional online platform integrations.

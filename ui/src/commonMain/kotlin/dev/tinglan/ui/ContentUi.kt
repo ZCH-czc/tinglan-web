@@ -136,7 +136,7 @@ internal fun retainedContentScroll(key:String):LazyListState {
                 }
                 if(info.description.isNotEmpty()) {Text(info.description,maxLines=if(expanded)Int.MAX_VALUE else 3,overflow=TextOverflow.Ellipsis,color=MaterialTheme.colorScheme.onSurfaceVariant);TextButton(onClick={expanded=!expanded}) {Text(if(expanded)"Hide description" else "Show description")}}
                 Button(onClick={command("collection-import")},enabled=!data.busy && !info.loading && info.title.isNotEmpty(),shape=RoundedCornerShape(16.dp),modifier=Modifier.padding(vertical=8.dp)) {Glyph("playlist",Modifier.size(18.dp),MaterialTheme.colorScheme.onPrimary);Spacer(Modifier.width(8.dp));Text(if(local)"Open local playlist" else "Save as local playlist")}
-                Text("Save the available track list. Download audio separately from each track’s menu.",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
+                Text("Save the available track list. Download audio separately from each track's menu.",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)
             }
             if(info.warning.isNotEmpty())item {ErrorCard(info.warning) {command("collection-refresh")}}
             if(info.unavailable>0)item {Text("On this page, ${info.unavailable} items unavailable",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodySmall)}

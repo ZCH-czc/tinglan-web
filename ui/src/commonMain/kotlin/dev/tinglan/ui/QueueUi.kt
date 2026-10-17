@@ -97,7 +97,7 @@ private fun queueDurationLabel(ms:Long):String {
                 Action("down","Close queue"){command("queue-close")}
                 Column(Modifier.weight(1f).padding(horizontal=4.dp)) {
                     Text("Play queue",Modifier.testTag(titleTag).semantics {heading()},style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold)
-                    Text("${model.queueTotal} tracks · ${queueDurationLabel(model.queueDuration)}",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
+                    Text("${quantityLabel(model.queueTotal,"track")} · ${queueDurationLabel(model.queueDuration)}",style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant,maxLines=1,overflow=TextOverflow.Ellipsis)
                 }
                 Action(if(model.queueLocked)"lock"else "unlock",if(model.queueLocked)"Unlock queue"else "Lock queue",color=MaterialTheme.colorScheme.onSurfaceVariant){command("queue-lock")}
                 Action("delete","Clear other tracks",color=MaterialTheme.colorScheme.error,enabled=!model.queueLocked && model.queueTotal>1){command("queue-clear")}

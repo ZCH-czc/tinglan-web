@@ -35,7 +35,7 @@ internal val selectionDialogs=setOf("theme","search-preference","font","motion-p
     TinglanAlertDialog(onDismissRequest={command("dialog-close")},bottomSheet=true,
         title={Text(if(theme)"Appearance"else "Search preferences")},text={
             Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                if(theme)listOf(Triple("system","Follow system","Match your device’s light or dark appearance"),Triple("light","Light","A bright, clear interface"),Triple("dark","Dark","A softer, dark interface")).forEach {(id,label,copy)->
+                if(theme)listOf(Triple("system","Follow system","Match your device's light or dark appearance"),Triple("light","Light","A bright, clear interface"),Triple("dark","Dark","A softer, dark interface")).forEach {(id,label,copy)->
                     SelectionRow(label,model.theme==id,copy,when(id){"system"->"appearance-system";"light"->"sun";else->"moon"}) {command("setting",payload("key" to "theme","value" to id));command("dialog-close")}
                 }else {
                     Text("Show the preferred platform first. Other platform results can still be expanded.",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)

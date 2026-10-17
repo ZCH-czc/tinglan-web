@@ -44,6 +44,7 @@ internal fun motionDuration(ms:Int)=if(model.reduced)0 else if(model.motionPrese
 private fun duration(ms:Int)=motionDuration(ms)
 internal fun payload(vararg fields: Pair<String, String>) = buildJsonObject { fields.forEach { put(it.first, it.second) } }.toString()
 internal fun platformName(id: String) = when(id) { "qq" -> "QQ Music"; "bili" -> "Bilibili"; "netease" -> "NetEase Music"; else -> "Local music" }
+internal fun quantityLabel(count: Number, noun: String) = "$count $noun${if(count.toLong()==1L)""else "s"}"
 internal fun sourceColor(id: String) = when(id) { "qq" -> Color(0xFF1CB578); "bili" -> Color(0xFFEC7298); "netease" -> Color(0xFFE55055); else -> Color(0xFF247583) }
 
 @Composable fun TinglanApp() {
@@ -233,7 +234,7 @@ private val destinations = listOf(Triple("home","home","Home"),Triple("search","
             Surface(shape=RoundedCornerShape(26.dp),color=MaterialTheme.colorScheme.primary.copy(alpha=.09f)) {
                 Column(Modifier.fillMaxWidth().padding(28.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                     Text("A little more music",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
-                    Text(if(model.staticHosting)"Import music and keep your favorites close. Tracks stay in this device’s browser."else "Discover familiar sounds and keep your own music together.",color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if(model.staticHosting)"Import music and keep your favorites close. Tracks stay in this device's browser."else "Discover familiar sounds and keep your own music together.",color=MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) { Button(onClick={command("navigate","search")},shape=RoundedCornerShape(14.dp)) {Glyph("search",Modifier.size(18.dp),MaterialTheme.colorScheme.onPrimary);Spacer(Modifier.width(8.dp));Text("Find a song")}; TextButton(onClick={command("import")}) {Text("Import music")} }
                 }
             }

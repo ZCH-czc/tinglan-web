@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFile, writeFile, mkdir, rm, cp } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, cp, readdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {createHash} from 'node:crypto';
@@ -62,8 +62,14 @@ for(const file of ['Apache-2.0.txt','Compose-LICENSE.txt','Skia-LICENSE.txt','Sk
 notices.push(`Noto Sans SC / Source Han Sans · SIL OFL 1.1\n${await readFile(resolve(root,'web/Noto-Sans-SC-OFL.txt'),'utf8')}`);
 for (const [name, info] of [...packages].sort()) {
   let license = '';
-  for (const file of ['LICENSE', 'LICENSE.txt', 'LICENSE.md', 'license', 'license.txt']) {
-    try { license = await readFile(resolve(info.directory, file), 'utf8'); break; } catch { /* Next conventional filename. */ }
+  // Resolve the real filename: npm packages use several capitalization styles,
+  // and CI runs on a case-sensitive filesystem.
+  const candidates=(await readdir(info.directory,{withFileTypes:true}))
+    .filter(entry=>entry.isFile() && /^licen[cs]e(?:\.(?:txt|md))?$/i.test(entry.name))
+    .map(entry=>entry.name).sort();
+  for (const file of candidates) {
+    license = await readFile(resolve(info.directory, file), 'utf8');
+    if(license.trim())break;
   }
   if (!license) throw new Error(`License text missing for bundled ${name}`);
   notices.push(`${name} ${info.version} · ${info.license}\n${license}`);

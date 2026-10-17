@@ -39,6 +39,7 @@ import {notePreview} from './note-data.mjs';
 import {ListeningRecorder} from './listening-recorder.mjs';
 import {ListeningStore} from './listening-storage.mjs';
 import {ListeningPages} from './listening-pages.mjs';
+import {localizedListeningReport} from './listening-data.mjs';
 import {RadioLibrary} from './radio-library.mjs';
 import {RadioPlayback} from './radio-playback.mjs';
 import {RadioPages} from './radio-pages.mjs';
@@ -197,7 +198,7 @@ function emit() {
         ...presenceSnapshot(),
         ...notesSnapshot(),noteEditor:noteEditor?.state,noteCount,
         ...radioSnapshot(),radioAdding,radioAddError,...cacheSnapshot(),
-        statsInfo:{period:statsPeriod,offset:statsOffset,loading:statisticsPages?.state.loading || false,warning:statisticsPages?.state.warning || statsWarning,recording:preferences.recordListening!==false},statsReport:page==='statistics'?statisticsPages?.state.report || null:null,
+        statsInfo:{period:statsPeriod,offset:statsOffset,loading:statisticsPages?.state.loading || false,warning:statisticsPages?.state.warning || statsWarning,recording:preferences.recordListening!==false},statsReport:page==='statistics'?localizedListeningReport(statisticsPages?.state.report):null,
         collectionInfo:collectionState?{...collectionState,songs:undefined,playlist:collectionState.playlist?{...collectionState.playlist,coverKey:collectionState.playlist.image?.key || '',image:undefined}:null}:null,
         collectionSongs:collectionState?cachedData('collection-songs',`${libraryRevision}|${collectionRevision}`,()=>collectionState.songs.map(enrich)):empty,
         importingCollection:!!importAbort,

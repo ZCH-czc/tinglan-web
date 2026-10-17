@@ -26,3 +26,13 @@ export function listeningBounds(filter,now=Date.now()) {
   const end=new Date(date);if(period==='day')end.setDate(end.getDate()+1);if(period==='week')end.setDate(end.getDate()+7);if(period==='month')end.setMonth(end.getMonth()+1);if(period==='year')end.setFullYear(end.getFullYear()+1);
   return {start:+date,end:+end,label:period==='year'?String(date.getFullYear()):period==='month'?date.toLocaleDateString(currentLanguage(),{month:'long',year:'numeric'}):period==='week'?tr('Week of {0}',date.toLocaleDateString(currentLanguage(),{month:'short',day:'numeric'})):date.toLocaleDateString(currentLanguage()),period,offset};
 }
+
+const localizedReports=new WeakMap();
+/** Keep worker results and chart arrays intact; only date labels depend on UI language. */
+export function localizedListeningReport(report) {
+  if(!report)return null;
+  const language=currentLanguage(),previous=localizedReports.get(report);
+  if(previous?.language===language)return previous.value;
+  const label=listeningBounds({period:report.period,offset:0},report.start || Date.now()).label;
+  const value={...report,label};localizedReports.set(report,{language,value});return value;
+}

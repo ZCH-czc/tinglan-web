@@ -6,6 +6,16 @@ import {normalizePreferences} from '../web/library-data.mjs';
 import {LibraryStore} from '../web/storage.mjs';
 import {createBackup,readBackup} from '../web/backup.mjs';
 import {showDownloadNotification} from '../web/web-integration.mjs';
+import {localizedListeningReport} from '../web/listening-data.mjs';
+
+test('cached worker reports change language without recomputing charts or mutating content',()=>{
+  const report={period:'month',start:+new Date(2026,9,1),points:[{label:'1',value:3000}],songs:[{label:'Home / 海风'}]};
+  try{
+    setLanguage('en');const english=localizedListeningReport(report);assert.match(english.label,/October/);assert.equal(localizedListeningReport(report),english);
+    setLanguage('zh-CN');const chinese=localizedListeningReport(report);assert.match(chinese.label,/10月/);assert.equal(chinese.points,report.points);assert.equal(chinese.songs,report.songs);assert.equal(report.label,undefined);
+    assert.equal(localizedListeningReport(null),null);
+  }finally{setLanguage('en');}
+});
 
 test('English is the default regardless of device language; only supported preferences are accepted',()=>{
   assert.equal(currentLanguage(),'en');

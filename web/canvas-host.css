@@ -1,0 +1,15 @@
+html, body, #tinglan-root { width:100%; height:100%; margin:0; overflow:hidden; overscroll-behavior:none; background:#f5fafd; }
+body { -webkit-tap-highlight-color:transparent; }
+#boot-canvas { position:fixed; inset:0; width:100%; height:100%; z-index:20; touch-action:none; }
+audio { display:none; }
+#tinglan-video-layer { position:fixed; inset:0; z-index:30; overflow:hidden; background:#000; transform-origin:center; }
+#tinglan-video-layer[hidden] { display:none; }
+#tinglan-video { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; transform-origin:center; }
+#tinglan-video-controls { position:absolute; inset:0; width:100%; height:100%; background:transparent; }
+/* Compose's accessibility nodes use viewport-fixed coordinates. CSS containment
+   changes their containing block and offsets every control by the inline frame. */
+#tinglan-live-layer{position:fixed;z-index:35;overflow:hidden;background:#000}
+#tinglan-live-layer[hidden]{display:none}
+#tinglan-live-layer>video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+#tinglan-live-controls{position:absolute;inset:0;width:100%;height:100%;background:transparent}
+#tinglan-live-controls canvas{display:block;width:100%;height:100%;outline:0}

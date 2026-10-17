@@ -1,0 +1,28 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {IDBFactory} from 'fake-indexeddb';
+import {createHash} from 'node:crypto';
+import {LibraryStore,fileIdentity} from '../web/storage.mjs';import {importLanAudio} from '../web/lan-audio-import.mjs';import {extractMetadata} from '../web/metadata-parse.mjs';import {taggedWav,originalCover} from './media-fixtures.mjs';
+const module=await import('../build/dist/engine/tinglan-web-core.mjs'),engine=module.engineVersion?module:module.default;
+const file=()=>new File([taggedWav()],'来自另一设备.wav',{type:'application/octet-stream'});
+async function fixture(){globalThis.indexedDB=new IDBFactory();const store=new LibraryStore();await store.open();const records=new Map();engine.resetEngine();engine.upsertTrack('playing','当前音乐','歌手',60000,true);engine.setPosition(17000);let changes=0;const host={store,records,parse:extractMetadata,artwork:async blob=>[blob,blob],upsert:record=>{engine.upsertMetadata(record.id,record.title,record.artist,record.durationMs,record.favorite);if(record.lyrics)engine.setLyrics(record.id,record.lyrics);},changed:()=>++changes};return {host,store,records,changes:()=>changes};}
+
+test('received real WAV commits original audio, embedded Unicode labels, cover and lyrics without altering live playback',async()=>{
+  const f=await fixture();try{const bytes=file(),id=await importLanAudio(bytes,{},f.host),saved=(await f.store.tracks())[0];assert.equal(saved.title,'海风来信');assert.equal(saved.artist,'听岚测试');assert.match(saved.lyrics,/海风经过窗边/);assert.equal(saved.durationMs,12000);assert.equal(saved.hasArtwork,true);assert.deepEqual(Buffer.from(await (await f.store.read('media',id)).arrayBuffer()),taggedWav());assert.deepEqual(Buffer.from(await (await f.store.read('artwork',id)).arrayBuffer()),originalCover());assert.deepEqual(Buffer.from(await (await f.store.read('artwork',id+':thumb')).arrayBuffer()),originalCover());assert.equal(engine.currentId(),'playing');assert.equal(engine.positionMs(),17000);assert.deepEqual(JSON.parse(engine.queueIdsJson()),['playing']);assert.equal(f.changes(),1);}finally{f.store.db.close();}
+});
+
+test('duplicate imports keep existing favorites and edited lyrics while avoiding additional media writes',async()=>{
+  const f=await fixture();try{const options={sha256:createHash('sha256').update(taggedWav()).digest('hex')},id=await importLanAudio(file(),options,f.host),record=f.records.get(id);record.favorite=true;record.lyrics='[00:01]我的修改';await f.store.patchTrack(id,{favorite:true,lyrics:record.lyrics});f.host.parse=()=>assert.fail('duplicate should not parse again');assert.equal(await importLanAudio(new File([taggedWav()],'另一文件名.wav',{lastModified:123}),options,f.host),id);const saved=(await f.store.tracks())[0];assert.equal(saved.favorite,true);assert.equal(saved.lyrics,record.lyrics);assert.equal((await f.store.tracks()).length,1);assert.equal(f.changes(),1);}finally{f.store.db.close();}
+});
+
+test('canceling before or during metadata work never starts a local commit or changes playback',async()=>{
+  const f=await fixture();try{const first=new AbortController();first.abort();await assert.rejects(importLanAudio(file(),{signal:first.signal},f.host),error=>error.name==='AbortError');const controller=new AbortController();let parsed;f.host.parse=async bytes=>{parsed=await extractMetadata(bytes);controller.abort();return parsed;};await assert.rejects(importLanAudio(file(),{signal:controller.signal},f.host),error=>error.name==='AbortError');assert.equal((await f.store.tracks()).length,0);assert.equal(f.changes(),0);assert.equal(engine.currentId(),'playing');assert.equal(engine.positionMs(),17000);}finally{f.store.db.close();}
+});
+
+test('transaction cancellation, clone failure and concurrent capacity admission leave no partial audio or covers',async()=>{
+  const f=await fixture();try{const signal=new AbortController(),id=await fileIdentity(file()),record={id,title:'测试'};const pending=f.store.putTrack(record,file(),[new Blob(['ART']),new Blob(['THUMB'])],{signal:signal.signal});signal.abort();await assert.rejects(pending,error=>error.name==='AbortError');assert.equal(await f.store.read('media',id),undefined);assert.equal(await f.store.read('artwork',id),undefined);let undone=0;f.host.beforeCommit=()=>()=>++undone;const original=f.store.putTrack.bind(f.store);f.store.putTrack=()=>Promise.reject(new Error('quota'));await assert.rejects(importLanAudio(file(),{},f.host),/quota/);assert.equal(undone,1);assert.equal(f.records.size,0);f.store.putTrack=original;
+    await f.store.write(['tracks'],tx=>{for(let i=0;i<10000;i++)tx.objectStore('tracks').put({id:'saved-'+i},'saved-'+i);});await assert.rejects(f.store.putTrack(record,file(),[new Blob(['ART']),new Blob(['THUMB'])],{maxTracks:10000}));assert.equal((await f.store.tracks()).length,10000);assert.equal(await f.store.read('media',id),undefined);assert.equal(await f.store.read('artwork',id),undefined);
+  }finally{f.store.db.close();}
+});
+
+test('malformed audio and a failed artwork decode preserve a precise outcome without pretending a corrupt file imported',async()=>{
+  const f=await fixture();try{await assert.rejects(importLanAudio(new File(['not audio'],'broken.wav'),{},f.host));assert.equal(f.records.size,0);f.host.parse=async()=>({audioDetected:false});await assert.rejects(importLanAudio(file(),{},f.host),/audio/i);assert.equal((await f.store.tracks()).length,0);f.host.parse=extractMetadata;f.host.artwork=async()=>{throw new Error('decode failed')};const id=await importLanAudio(file(),{},f.host);assert.equal(f.records.get(id).hasArtwork,false);assert.equal(await f.store.read('artwork',id),undefined);assert.ok(await f.store.read('media',id));}finally{f.store.db.close();}
+});

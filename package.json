@@ -1,0 +1,31 @@
+{
+  "name": "tinglan-web",
+  "version": "0.31.1",
+  "private": false,
+  "type": "module",
+  "description": "Tinglan Kotlin/Wasm self-drawn multi-platform music application",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:workers": "node scripts/build-web.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "serve": "node scripts/serve.mjs",
+    "test:engine": "node --test tests/engine.test.mjs",
+    "test:playback": "node --test tests/playback.test.mjs",
+    "preview:pages": "node scripts/preview-pages.mjs",
+    "verify:pages": "node scripts/verify-distribution.mjs build/pages"
+  },
+  "dependencies": {
+    "@js-joda/core": "5.6.5",
+    "hls.js": "1.7.3",
+    "music-metadata": "12.2.0",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "fake-indexeddb": "6.2.5",
+    "jsqr": "1.4.0"
+  },
+  "license": "GPL-3.0-only"
+}

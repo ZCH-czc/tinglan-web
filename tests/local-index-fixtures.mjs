@@ -1,0 +1,7 @@
+/** Deterministic synthesized music; no third-party recording or user audio. */
+export function music(seconds,seed=7){
+  let state=seed>>>0;const next=()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/4294967296),melody=Array.from({length:seconds*4+1},()=>Array.from({length:5},(_,b)=>100+b*b*200+80+Math.floor(next()*100))),phase=new Float64Array(5),out=new Float32Array(seconds*16000);
+  for(let i=0;i<out.length;i++){let value=0;for(let b=0;b<5;b++){phase[b]+=2*Math.PI*melody[Math.floor(i/4000)][b]/16000;value+=Math.sin(phase[b])*2400*(.8+.2*Math.sin(i/800));}out[i]=Math.max(-32768,Math.min(32767,Math.trunc(value)))/32768;}return out;
+}
+export function recording(source,startSeconds=6.013,seconds=6){let state=39;return source.slice(Math.floor(startSeconds*16000),Math.floor((startSeconds+seconds)*16000)).map(n=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return Math.trunc(n*32768*.6+(state/4294967296-.5)*360)/32768;});}
+export function wav(samples){const out=Buffer.alloc(44+samples.length*2);out.write('RIFF');out.writeUInt32LE(out.length-8,4);out.write('WAVEfmt ',8);out.writeUInt32LE(16,16);out.writeUInt16LE(1,20);out.writeUInt16LE(1,22);out.writeUInt32LE(16000,24);out.writeUInt32LE(32000,28);out.writeUInt16LE(2,32);out.writeUInt16LE(16,34);out.write('data',36);out.writeUInt32LE(out.length-44,40);samples.forEach((n,i)=>out.writeInt16LE(Math.max(-32768,Math.min(32767,Math.trunc(n*32768))),44+i*2));return out;}

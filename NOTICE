@@ -1,0 +1,57 @@
+Tinglan Web 0.31.1 (standalone Web application)
+
+This Web adaptation and its shared Kotlin module are distributed under GPL-3.0,
+consistent with the ArchiveTune application from which shared policies are built.
+The complete license is included in LICENSE (LICENSE.txt in the Web build).
+
+NetEase Cloud Music AFP engine: the same byte-pinned WebAssembly from the native
+application's official extension 1.0.4 reference is included in recognition/.
+Original vendor attribution and hashes are in recognition/NOTICE.txt. The Web
+binding adapter replaces generated function naming with ordinary closures and
+exports a module factory; it does not require JavaScript eval. Vendor rights
+and original attribution remain with NetEase Cloud Music.
+
+Shared files are preserved with attribution in shared/kotlin/:
+  moe/rukamori/archivetune/lyrics/LyricsLineInteraction.kt
+  moe/rukamori/archivetune/lyrics/LyricsRefreshPolicy.kt
+  moe/rukamori/archivetune/ui/component/PlayingIndicatorMotion.kt
+  moe/rukamori/archivetune/musicrecognition/LocalAudioFingerprint.kt
+  moe/rukamori/archivetune/ui/player/QueueViewport.kt
+  moe/rukamori/archivetune/ui/component/PlayerSlider.kt
+ArchiveTune (2026), Rukamori and contributors; existing source notices and licenses
+are preserved in the shared sources and shared/LICENSE.
+
+Kotlin compiler, standard library and Gradle plugin: JetBrains and contributors,
+Apache License 2.0, https://github.com/JetBrains/kotlin
+Binaryen (build-time Wasm optimizer): WebAssembly contributors, Apache License 2.0,
+https://github.com/WebAssembly/binaryen
+Gradle wrapper/build tool: Gradle contributors, Apache License 2.0,
+https://github.com/gradle/gradle
+
+Visible controls are rendered by Compose Multiplatform 1.12.1 / Skiko 0.150.1 / Skia,
+with Compose Material3 1.9.0 and kotlinx.serialization 1.9.0. These JetBrains / Android
+Open Source Project components use Apache-2.0; Skia uses a BSD license. Their notices
+and complete primary license texts are distributed in licenses/.
+
+Noto Sans SC / Source Han Sans: SIL Open Font License 1.1, included in
+Noto-Sans-SC-OFL.txt. The font is reused from the Android application's licensed asset.
+
+music-metadata 12.2.0 and its bundled dependencies parse metadata in a Worker.
+@js-joda/core 5.6.5 is used by Kotlin/Wasm interoperability. Their exact package
+licenses and notices are included in THIRD_PARTY_NOTICES.txt. esbuild 0.28.2 and
+fake-indexeddb 6.2.5 are development dependencies, not application media services.
+
+hls.js 1.7.3 (video-dev contributors), Apache License 2.0, provides browser HLS
+transport and media recovery. It is loaded only when live playback is requested.
+Its complete license and bundled source notices appear in THIRD_PARTY_NOTICES.txt.
+
+Protocol mappings and public lyric matching policies are adapted from the Android
+ArchiveTune source under GPL-3.0, with original authorship retained in source files.
+No music, user account sessions, signing private keys or third-party media are
+bundled with the browser application.
+
+qrcode 1.5.4 (soldair and contributors), MIT, generates login symbol modules only.
+The symbol is drawn by Compose/Skia with a four-module quiet zone. QR image or
+challenge keys never enter persistent media storage or portable backups. Its
+complete license and bundled dependency notices appear in THIRD_PARTY_NOTICES.txt.
+jsQR 1.4.0 (MIT) is used only for independent test decoding, not shipped to users.

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5fafd">
+  <meta name="description" content="Tinglan, a canvas-rendered player for platform and local music.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Tinglan · Web</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./canvas-host.css">
+  <link rel="preload" href="./composeResources/dev.tinglan.ui.generated.resources/font/noto_color_emoji.ttf" as="fetch" type="font/ttf" crossorigin>
+  <script type="module" src="./boot.mjs"></script>
+</head>
+<body>
+  <div id="tinglan-root"></div>
+  <canvas id="boot-canvas" aria-label="Preparing Tinglan"></canvas>
+</body>
+</html>

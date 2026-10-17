@@ -1,0 +1,30 @@
+NetEase Cloud Music audio recognition fingerprint engine
+
+Source: the official "云音乐听歌" Chrome Web Store extension, version 1.0.4
+Extension ID: kemcalcncfhmdkgglekijclbomdoohkp
+Publisher: NetEase Cloud Music
+Store: https://chromewebstore.google.com/detail/kemcalcncfhmdkgglekijclbomdoohkp
+Public update service: https://clients2.google.com/service/update2/crx
+Retrieved: 2026-10-05
+
+The AFP WebAssembly file is preserved byte for byte. Its generated Emscripten /
+Embind binding support is isolated from the extension bundle in afp-bindings.js.
+The extension's recorder, Chrome APIs, cross-frame messages, UI, analytics,
+cookies, and network code are not bundled into this application.
+runner.html and runner.js implement ArchiveTune's local-only PCM interface.
+
+Checksums (SHA-256):
+Official CRX: ef746443a0f240c525b6cdf8ff6cf27ab22f4ac0399cd3b2564452e753ce3b75
+Original sandbox.bundle.js module 321 is the source of the generated bindings.
+afp.wasm: 8064415bb66e45410e88877f07cd007a3ae62ebf463aac13c159a8f13e4c8fe8
+afp-bindings.js: 40ac6be12704ea07983dc0ad807b0c047ee7c26ba1dd0018625909ecacb2303d
+
+Official protocol observed by static inspection of popup.bundle.js and
+sandbox.bundle.js: 8,000 Hz mono Float32 PCM; first 48,000 samples; six seconds;
+ExtractQueryFP(ArrayBuffer); Base64 encoded byte vector; form POST to
+https://interface.music.163.com/api/music/audio/match with sessionId,
+algorithmCode=shazam_v2, duration=6, rawdata, times=2, decrypt=1.
+The extension accepts a match when data.result contains at least one song.
+
+Reference inspection and independently generated synthetic test goldens are
+saved in the repository's reference/netease-recognition directory.
